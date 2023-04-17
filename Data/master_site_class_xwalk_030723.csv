@@ -199,7 +199,7 @@ COAW1449,I,AW,West,Q&D Interpretation of logger data
 COAW1539,I,AW,West,Q&D review of logger data
 COAW9104,E,AW,West,Q&D Interpretation of logger data
 COAW9110,E,AW,West,Q&D Interpretation of logger data
-COAW9111,U,AW,West,Looks E but data are missing for a big chunk in Spring. No APT possible. Weather during gap is dry but not rain-free. Referrred to PDT
+COAW9111,E,AW,West,Looks E but data are missing for a big chunk in Spring. No APT possible. Weather during gap is dry but not rain-free. Referrred to PDT
 COCB1,P,GP_C,GP,
 COCB120,U,GP_C,GP,
 COCB121,P,GP_C,GP,
@@ -467,7 +467,7 @@ MSSE9550_B,E,SE,East,
 MSSE9555_V,E,SE,East,
 MSSE9556_V,E,SE,East,
 MSSE9557_V,P,SE,East,
-MTAW9190,U,AW,West,"Loggers have a gap from late March to Late June, which is the rainiest period. Unable to distinguish between I and E. Likely reject, referred to PDT"
+MTAW9190,U,AW,West,"REJECT. Loggers have a gap from late March to Late June, which is the rainiest period. Unable to distinguish between I and E. Likely reject, referred to PDT"
 MTAW9191,E,AW,West,Lots of blips but all fairly low
 MTAW9192,E,AW,West,Q&D interpretation of logger data
 MTNB14,E,GP_N,GP,
@@ -1067,6 +1067,6 @@ WYWM1915,I,WM,West,
 WYWM1916,I,WM,West,
 WYWM9146,I,WM,West,"Review more closely. Longest flow is ~44, so borderline I."
 WYWM9147,I,WM,West,Q&D Interpretation of logger data
-WYWM9148,P,WM,West,Q&D inspection of logger data. Loggers show brief dry periods but they don't match field observations. We suspect this is due to logger being deployed above the surface
+WYWM9148,U,WM,West,REJECT. P or I fuzzy. Loggers show brief dry periods but they don't match field observations. We suspect this is due to logger being deployed above the surface
 WYWM9154,P,WM,West,"Review. Could be P or I. Some dry periods indicated in L1, but none in L2. Field observations show wet conditions on those days"
 WYWM9155,I,WM,West,Q&D Interpretation of logger data
