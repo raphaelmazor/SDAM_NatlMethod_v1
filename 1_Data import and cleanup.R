@@ -9,7 +9,7 @@ xwalk_df<-read_csv("Data/master_site_class_xwalk_030723.csv") %>%
 
 EastDBs<-c("NESE Baseline Revisits v2", "NESE Baseline v1", "NESE Validation v1")
 WestDBs<-c("WMBR_1_1","WEx_SDAM_0","WMBR_2","WMV_1","FD003","FD004")
-GPDBs<-c("Great Plains Baseline Revisits v3",  "Great Plains SDAM v3",  "Great Plains Validation_v2", "Great Plains Baseline Revisits v2_1_October")
+GPDBs<-c("Great Plains Baseline Revisits v3",  "Great Plains SDAM v3",  "Great Plains Validation_v2", "Great Plains Baseline Revisits v2_1_October", "GreatPlains_SDAM_V3_edits")
 # xwalk_df$Region_detail2<-factor(xwalk_df$Region_detail2, levels=c("AW","WM","GP","NE","SE", "CB"))
 
 xwalk_df %>%
@@ -19,11 +19,19 @@ xwalk_df %>%
          TotalKnown=E+I+P,
          Pct_P=P/TotalKnown,
          Pct_I=I/TotalKnown,
-         Pct_E=E/TotalKnown) %>%
-  write.table(file="clipboard", sep="\t", row.names=F)
+         Pct_E=E/TotalKnown) #%>%
+  # write.table(file="clipboard", sep="\t", row.names=F)
 
 #Import main_df
 #### MAIN - Read in main site data table and filter for GP sites ####
+library(skimr)
+main_df %>%
+  group_by(Region_DB) %>%
+  skim_to_wide()
+
+main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
+main_raw %>% filter(origin_database %in% EastDBs) %>% View()
+
 main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
   transmute( # Align column names to original metric calculator script naming
@@ -46,7 +54,7 @@ main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %
     Long_field= long,
     Weather=weathernow,
     PctCloudCover = case_when(is.na(cloudynow) == T ~ 0,T~cloudynow), # Replace missing cloud cover with zero
-    rain_yesno, #NESE
+    rain_yesno, #NESE only
     Disturbances=disturbed,
     Disturbances_details=disturbed_note,
     Bankwidth_0= bankfullwidth0,
@@ -68,10 +76,10 @@ main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %
     IsolatedPools_number= case_when(
       is.na(pools_observed) == T ~ 0, # Replace missing pool number with zero
       T~pools_observed),
-    MaxPoolDepth_calc = max_pool_depth_calc, # NESE
-    MaxPoolDepth = max_pool_depth,# NESE
-    SeepsSprings_yn=hi_seepsspring,# NESE
-    SeepsSprings_inchannel = inchannel,# NESE
+    MaxPoolDepth_calc = max_pool_depth_calc, # NESE only
+    MaxPoolDepth = max_pool_depth,# NESE only
+    SeepsSprings_yn=hi_seepsspring,# All regions
+    SeepsSprings_inchannel = inchannel,# NESE only
     baseflowscore,# NESE
     baseflow_notes,#NESE
     LeafLitter_score = hi_leaflitter,# NESE
