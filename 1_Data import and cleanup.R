@@ -6,6 +6,10 @@ xwalk_df<-read_csv("Data/master_site_class_xwalk_030723.csv") %>%
                                     T~Region_detail) %>%
            factor(levels=c("AW","WM","GP","NE","SE", "CB")),
          Class=factor(Class, levels=c("P","I","E","U")))
+
+EastDBs<-c("NESE Baseline Revisits v2", "NESE Baseline v1", "NESE Validation v1")
+WestDBs<-c("WMBR_1_1","WEx_SDAM_0","WMBR_2","WMV_1","FD003","FD004")
+GPDBs<-c("Great Plains Baseline Revisits v3",  "Great Plains SDAM v3",  "Great Plains Validation_v2", "Great Plains Baseline Revisits v2_1_October")
 # xwalk_df$Region_detail2<-factor(xwalk_df$Region_detail2, levels=c("AW","WM","GP","NE","SE", "CB"))
 
 xwalk_df %>%
@@ -15,15 +19,20 @@ xwalk_df %>%
          TotalKnown=E+I+P,
          Pct_P=P/TotalKnown,
          Pct_I=I/TotalKnown,
-         Pct_E=E/TotalKnown) 
+         Pct_E=E/TotalKnown) %>%
+  write.table(file="clipboard", sep="\t", row.names=F)
 
 #Import main_df
 #### MAIN - Read in main site data table and filter for GP sites ####
 main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
-  filter(origin_database %in% myDBs) %>%
+  # filter(origin_database %in% myDBs) %>%
   transmute( # Align column names to original metric calculator script naming
     Download_date = Sys.time(),
     Database= origin_database,
+    Region_DB = case_when(Database %in% EastDBs ~"East",
+                          Database %in% WestDBs~"West",
+                          Database %in% GPDBs~"GP",
+                          T~"Other"),
     ParentGlobalID = globalid,
     SiteCode = sitecode,
     SiteName = sitename,
@@ -110,7 +119,7 @@ main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %
     Sinuosity_score= si_sinuosityscore,
     Sinuousity_method= sinuositymethod,
     Sinuosiy_notes=sinuositycondition,
-    ActiveFloodplain_score = gi_afpscore,# NESE
+    ActiveFloodplain_score = gi_afpscore,# NESE ONLY
     ActiveFloodplain_notes = afpnotes,# NESE
     fp_number,# NESE - number of locations assessed for bankfull width
     fp_bankful,# NESE - Bankfull width, location 1
