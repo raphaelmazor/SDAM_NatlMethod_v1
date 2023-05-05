@@ -1,7 +1,7 @@
 library(tidyverse)
 
 #Import xwalk<-
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723.csv") %>%
+xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
   mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
                                     T~Region_detail) %>%
            factor(levels=c("AW","WM","GP","NE","SE", "CB")),
@@ -32,7 +32,7 @@ main_df %>%
 main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 main_raw %>% filter(origin_database %in% EastDBs) %>% View()
 
-main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
+main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
   transmute( # Align column names to original metric calculator script naming
     Download_date = Sys.time(),
@@ -220,3 +220,4 @@ main_df<- read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %
                                            fp_entrenchmentratio_mean>=2.5~3,
                                            T~NA_real_)) %>%
   ungroup()
+
