@@ -27,10 +27,21 @@ xwalk_df %>%
 library(skimr)
 main_df %>%
   group_by(Region_DB) %>%
-  skim_to_wide()
+  select(-ends_with("_notes")) %>%
+  skim_without_charts()
 
 main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 main_raw %>% filter(origin_database %in% EastDBs) %>% View()
+main_raw %>% filter(origin_database %in% WestDBs) %>% View()
+
+main_df %>%
+  filter(Region_DB =="West") %>%
+  select(WaterInChannel_score, WaterInChannel_notes)
+
+# WaterInChannel_score=`Water in Channel score (0-6)`,
+# WaterInChannel_notes=Notes...35,
+# WaterInChannel_score=hi_channelscore, #unique(main_df$hi_channelscore)
+# WaterInChannel_notes=channelscorenote,
 
 main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
@@ -80,15 +91,17 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     MaxPoolDepth = max_pool_depth,# NESE only
     SeepsSprings_yn=hi_seepsspring,# All regions
     SeepsSprings_inchannel = inchannel,# NESE only
-    baseflowscore,# NESE
+    baseflowscore,# NESE only
     baseflow_notes,#NESE
+    WaterInChannel_score = case_when(is.na(hi_channelscore) & !is.na(baseflowscore)~2*baseflowscore,
+                                     T~hi_channelscore), # CALCULATE DUE TO MISSING FOR NESE
+    WaterInChannel_notes=  case_when(is.na(hi_channelscore)~paste("Calculated as twice the value of NC indicator.",baseflow_notes),
+                                     T~channelscorenote),
     LeafLitter_score = hi_leaflitter,# NESE
     LeafLitter_notes = leafnotes,# NESE
     ODL_score = hi_odl,# NESE
     ODL_notes = odlnotes, # NESE
-    WaterInChannel_score = case_when(is.na(hi_channelscore)~2*baseflowscore,
-                                     T~hi_channelscore), # CALCULATE DUE TO MISSING FOR NESE (KSM)
-    WaterInChannel_notes=  "Calculated as twice the value of NC indicator", # Not recorded for NESE
+    
     HydricSoils_score=hydricsoils,
     HydricSoils_locations=locations, 
     HydricSoils_notes= hydricnotes,
@@ -219,5 +232,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
                                            fp_entrenchmentratio_mean<2.5~1.5,
                                            fp_entrenchmentratio_mean>=2.5~3,
                                            T~NA_real_)) %>%
-  ungroup()
+  ungroup() %>%
+  #eliminate some intermediary metrics
+  select(-MaxPoolDepth_calc,-baseflowscore, -baseflow_notes, -fp_entrenchmentratio_mean)
 
