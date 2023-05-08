@@ -32,17 +32,17 @@ main_raw %>% filter(origin_database %in% EastDBs) %>% select(abundancealgae) %>%
 # main_raw %>% filter(origin_database %in% WestDBs) %>% View()
 
 
-main_df %>%
-  select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Alg")) %>%
-  mutate(AlgScore2 = case_when(Algae_score=="Not recorded"~NA_character_,
-                               T~Algae_score) %>%
-           as.numeric()) %>%
-  filter(is.na(AlgalCover_Live) & !is.na(AlgScore2)) %>% as.data.frame()
-group_by(Region_DB) %>% skim_without_charts()
+# main_df %>%
+#   select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Alg")) %>%
+#   mutate(AlgScore2 = case_when(Algae_score=="Not recorded"~NA_character_,
+#                                T~Algae_score) %>%
+#            as.numeric()) %>%
+#   filter(is.na(AlgalCover_Live) & !is.na(AlgScore2)) %>% as.data.frame()
+# group_by(Region_DB) %>% skim_without_charts()
 
-main_df %>%
-  select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
-  group_by(Region_DB) %>% skim_without_charts()
+# main_df %>%
+  # select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
+  # group_by(Region_DB) %>% skim_without_charts()
 
 main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
@@ -265,16 +265,11 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     Liverwort_cover=bryophyteliverworts,
     Bryophyte_notes=bryophtyenotes,
     
- 
     DifferencesInVegetation_score=vegetationdifferencescore, 
     DifferencesInVegetation_notes=vegenotes, 
     NWPL_checklist= regionalindicators, 
     ai_fieldid, #NESE
     Additional_notes= additionalnotes,
-    # case_when(#NESE
-    #   is.na(ancillarynote) & is.na(additionalnotes) ~ NA_character_,
-    #   is.na(ancillarynote) ~additionalnotes, #Other regions have "ancillarynote" field instead of "additionalnotes"
-    #   is.na(additionalnotes) ~ ancillarynote),
     hydrovegenote #NESE
   ) %>%
   rowwise() %>%
@@ -298,9 +293,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
 
 
 #AMPHIBIANS
-
-# main_df %>% group_by(Amphibians_yn, Amphibians_abundance) %>% tally()
-
+#Calculate amphibian p/a from NESE data
 salamander_species<-c("Desmognathus","Desmognathus auriculatus","Desmognathus fuscus","Desmognathus monticola","Desmognathus ochrophaeus",
                       "Eurycea","Eurycea bislineata","Eurycea cirrigera","Eurycea longicauda","Eurycea wilderae",
                       "Gyrinophius", "Gyrinophius porphyriticus" ,"Plethodontidae","Plethodon cinereus", "Urodela")
@@ -358,5 +351,7 @@ main_df<-main_df %>%
                                     Amphibians_yn %in% c("notdetected","notdectected")~"notdetected",
                                     Amphib_count==0~"notdetected",
                                     is.na(Amphib_count) & is.na(Amphibians_yn)~"notdetected",
-                                    T~"OTHER")) 
+                                    T~"OTHER")) %>%
+  #Get rid of interim metrics
+  select(-Amphib_count)
          
