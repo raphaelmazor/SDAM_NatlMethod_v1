@@ -28,7 +28,7 @@ library(skimr)
 
 
 main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
-main_raw %>% filter(origin_database %in% EastDBs) %>% select(abundancealgae) %>% View()
+# main_raw %>% filter(origin_database %in% EastDBs) %>% select(abundancealgae) %>% View()
 # main_raw %>% filter(origin_database %in% WestDBs) %>% View()
 
 
@@ -41,8 +41,8 @@ main_raw %>% filter(origin_database %in% EastDBs) %>% select(abundancealgae) %>%
 # group_by(Region_DB) %>% skim_without_charts()
 
 # main_df %>%
-  # select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
-  # group_by(Region_DB) %>% skim_without_charts()
+# select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
+# group_by(Region_DB) %>% skim_without_charts()
 
 main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
@@ -241,7 +241,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
                                       AlgalCover_Live=="<2%" | AlgalCover_Dead=="<2%"~"<2%",
                                       AlgalCover_Live=="Not detected" & AlgalCover_Dead=="Not detected"~"Not detected",
                                       T~"Other"
-                                      ),
+    ),
     AlgalCover_Upstream=streambeddeadmats,
     AlgalCover_Live_NoUpstream = case_when(AlgalCover_Upstream=="yes"~"Not detected",T~AlgalCover_Live),
     AlgalCover_Dead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~"Not detected",T~AlgalCover_Dead),
@@ -296,10 +296,11 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
 #Calculate amphibian p/a from NESE data
 salamander_species<-c("Desmognathus","Desmognathus auriculatus","Desmognathus fuscus","Desmognathus monticola","Desmognathus ochrophaeus",
                       "Eurycea","Eurycea bislineata","Eurycea cirrigera","Eurycea longicauda","Eurycea wilderae",
-                      "Gyrinophius", "Gyrinophius porphyriticus" ,"Plethodontidae","Plethodon cinereus", "Urodela")
+                      "Gyrinophius", "Gyrinophius porphyriticus" ,"Plethodontidae","Plethodon", "Plethodon cinereus", "Urodela")
 frog_species<-c("Acris","Acris crepitans","Acris crepitans blanchardi","Acris gryllus",
                 "Anaxyurus", "Anaxyurus americanus","Anura","Eleutherodactylus",
                 "Hyla","Hyla chrysoscelis",
+                "Eleutherodactylidae",
                 "Lithobates","Lithobates catesbeianus","Lithobates clamitans","Lithobates palustris","Lithobates pipiens","Lithobates sphenocephalus","Lithobates sphenocephalus utricularius","Lithobates sylvaticus",
                 "Incilius","Incilius nebulifer",
                 "Pseudacris","Pseudacris brachyphona","Pseudacris fouquettei","Pseudacris nigrita","Ranidae" )
@@ -326,7 +327,7 @@ amphib_df<-read_csv("https://sdamchecker.sccwrp.org/checker/download/amphibians-
   ) %>%
   filter(! Amphib_Species %in% c("None","None observed","Not recorded"))  
 setdiff(amphib_df$Amphib_Species , c(frog_species, salamander_species, multiyear_tadpoles)) 
-  
+
 
 
 amphib_mets<-amphib_df %>%
@@ -342,16 +343,104 @@ amphib_mets<-amphib_df %>%
             Salamander_Juvenile_abundance = sum(Amphib_Abundance[Salamander & Amphib_LifeStage %in% c("L","J")]),
             Multiyear_tadpole_abundance = sum(Amphib_Abundance[Multiyear_Tadpole & Amphib_LifeStage=="L"])
   )
-main_df$Amphibians_yn
+
 main_df<-main_df %>%
   left_join(amphib_mets %>% transmute(ParentGlobalID, 
                                       Amphib_count=Amphib_abundance)) %>%
   mutate(Amphibians_yn = case_when(Amphibians_yn=="present"~"present",
-                                    Amphib_count>0~"present",
-                                    Amphibians_yn %in% c("notdetected","notdectected")~"notdetected",
-                                    Amphib_count==0~"notdetected",
-                                    is.na(Amphib_count) & is.na(Amphibians_yn)~"notdetected",
-                                    T~"OTHER")) %>%
+                                   Amphib_count>0~"present",
+                                   Amphibians_yn %in% c("notdetected","notdectected")~"notdetected",
+                                   Amphib_count==0~"notdetected",
+                                   is.na(Amphib_count) & is.na(Amphibians_yn)~"notdetected",
+                                   T~"OTHER")) %>%
   #Get rid of interim metrics
   select(-Amphib_count)
-         
+
+#### HYDROVEG ####
+hydroveg_df<- 
+  read_csv("https://sdamchecker.sccwrp.org/checker/download/hydroveg-all") %>%
+  transmute(
+    ParentGlobalID = parentglobalid,
+    VegGlobalID=globalid,
+    SiteCode = hv_sitecode, 
+    Plant_Species=hv_species, 
+    Plant_Status=indicatorstatus, 
+    Plant_flag=unusualdistro,
+    InChannel = hv_inchannel, #NESE
+    Plant_notes=hv_notes
+  ) 
+# hydroveg_df %>% group_by(Plant_Species) %>% tally()  %>%
+#   clipr::write_clip()
+# 
+# hydroveg_df %>%
+#   select(ParentGlobalID, Plant_Species, Plant_Status, Plant_notes) %>%
+#   inner_join(main_df %>% 
+#                select(ParentGlobalID, Region_DB, Database, SiteCode, CollectionDate)) %>%
+#   filter(is.na(Plant_notes)) %>%
+#   # filter(Plant_Species=="Not recorded")
+#   # filter(Plant_Species=="Tri-finger leaf tree") %>%
+#   filter(str_detect(Plant_Species,"Yellow"))   %>%
+#   select(Database, SiteCode, CollectionDate) %>%
+#   unique() %>% as.data.frame()
+
+
+veg_metrics<-hydroveg_df %>%
+  mutate(Plant_Species = str_trim(Plant_Species)) %>% # Remove carriage returns, leading white space and trailing white space
+  mutate(Plant_Species = case_when(
+    Plant_Species %in% c("NR","?") ~ "No plant",
+    T~Plant_Species
+  )) %>%
+  mutate(Plant_Status = case_when(
+    is.na(Plant_Status) == T ~ "nonhydrophyte",
+    T~ Plant_Status),
+    Plant_flag = case_when(
+      is.na(Plant_flag) == T ~ "no",
+      T~Plant_flag
+    )) %>%
+  mutate(hydrophyte = Plant_Status %in% c("hydrophyte", "facw", "obl/sav"),
+         obl = Plant_Status %in% c("obl/sav"),
+         flagged = Plant_flag=="yes") %>%
+  # select(ParentGlobalID, Plant_Species, hydrophyte, obl, flagged, InChannel) %>%
+  transmute(ParentGlobalID, Plant_Species, 
+            hydrophyte = Plant_Status %in% c("hydrophyte","hydrophyte_facw","hydrophyte_obl","obl/sav","facw"), 
+            flagged=Plant_flag=="yes") %>%
+  # filter(hydrophyte) %>%
+  unique()%>%
+  group_by(ParentGlobalID) %>%
+  summarise(plants_reported=length(Plant_Species),
+            hydrophytes_present = sum(hydrophyte, na.rm=T),
+            hydrophytes_present_noflag = sum(hydrophyte[!flagged], na.rm=T),
+            
+            hydrophytes_present_any = hydrophyte %>% any(na.rm=T) %>% sum(na.rm=T),
+            hydrophytes_present_any_noflag = hydrophyte[!flagged] %>% any(na.rm=T) %>% sum(na.rm=T)
+            
+  ) %>% 
+  ungroup()
+
+main_df<-main_df %>%
+  left_join(veg_metrics %>% select(ParentGlobalID, hydrophytes_present, hydrophytes_present_noflag)) %>%
+  mutate(hydrophytes_present = case_when(is.na(hydrophytes_present)~0,T~hydrophytes_present),
+         hydrophytes_present_noflag = case_when(is.na(hydrophytes_present_noflag)~0,T~hydrophytes_present_noflag))
+
+
+#######AQUATIC INVERTEBRATES
+ai_df<-
+  read_csv("https://sdamchecker.sccwrp.org/checker/download/aquatic_invertebrates-all") %>%
+  transmute(
+    ParentGlobalID = parentglobalid,
+    AIGlobalID=globalid,
+    SiteCode = ai_sitecode, 
+    AI_Taxon=taxon,
+    AI_Lifestage=lifestage,
+    AI_LiveDead=ai_living, 
+    AI_Abundance=case_when(ai_abundance<0~NA_real_, T~ai_abundance), #Negative values are actually blanks
+    AI_Notes= ai_notes) %>%
+  filter(AI_Taxon != "Na" & AI_Taxon != "na" & !(is.na(AI_Taxon)))
+skim_without_charts(ai_df)
+
+ai_df %>% filter(AI_Taxon=="V1") %>% 
+  inner_join(main_df %>% select(ParentGlobalID, SiteCode, Database, CollectionDate))
+ai_df$AI_Taxon %>% unique() %>% sort()
+
+"{fccec8b8-25d5-443d-9a1b-3f28289199d3}" %in% main_df$ParentGlobalID
+main_df %>% filter(ParentGlobalID=="{fccec8b8-25d5-443d-9a1b-3f28289199d3}")
