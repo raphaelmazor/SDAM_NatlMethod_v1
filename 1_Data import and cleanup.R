@@ -149,12 +149,14 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     MaxPoolDepth = max_pool_depth,# NESE only
     SeepsSprings_yn=hi_seepsspring,# All regions
     SeepsSprings_inchannel = inchannel,# NESE only
+    springs_score_NM = case_when(SeepsSprings_yn=="present"~3,T~0),
     baseflowscore,# NESE only
     baseflow_notes,#NESE
     WaterInChannel_score = case_when(is.na(hi_channelscore) & !is.na(baseflowscore)~2*baseflowscore,
                                      T~hi_channelscore), # CALCULATE DUE TO MISSING FOR NESE
     WaterInChannel_notes=  case_when(is.na(hi_channelscore)~paste("Calculated as twice the value of NC indicator.",baseflow_notes),
                                      T~channelscorenote),
+    Wet=WaterInChannel_score>3,
     LeafLitter_score = hi_leaflitter,# NESE
     LeafLitter_notes = leafnotes,# NESE
     ODL_score = hi_odl,# NESE
@@ -195,11 +197,17 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     # Mosquitofish = mosquitofish, #Not NESE
     # all_mosqfish,#NESE
     fishabund_note,#NESE
-    Fish_score = abundancescorefish , # Not recorded for NESE
+    Fish_score_NM = abundancescorefish , # Not recorded for NESE
+    Fish_score_NC = case_when(number_of_fish =="0"~0,
+                           number_of_fish =="1"~0.5,
+                           number_of_fish =="2"~1,
+                           number_of_fish =="3"~1,
+                           number_of_fish ==">3"~1.5,
+                           T~NA_real_),
     Fish_PA = case_when(number_of_fish>0~1,
                         number_of_fish==">3"~1,
-                        Fish_score>0~1,
-                        is.na(Fish_score) & is.na(number_of_fish)~0,
+                        Fish_score_NM>0~1,
+                        is.na(Fish_score_NM) & is.na(number_of_fish)~0,
                         T~0), #Both East and Other regions
     Fish_PA_nomosq = (Fish_PA*(Mosquitofish=="no")), #Both East and Other regions
     #BMI_score= abundancescorebenthic,# Not recorded for NESE
@@ -210,7 +218,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     #Mosquitofish = mosquitofish, # Not recorded for NESE
     #Vertebrate_notes= observedabundancenote, # Not recorded for NESE
     # IOFB_yn= observedfungi, 
-    ironox_bfscore = case_when(observedfungi=="present"~3,
+    ironox_bfscore_NM = case_when(observedfungi=="present"~3,
                                observedfungi %in% c("notdetected","notdectected")~0,
                                is.na(observedfungi)~0,
                                is.na(ironox_bfscore)~0,
@@ -290,7 +298,52 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
          -starts_with("dens_"))
 
 
+####Soil moisture
+main_df$SoilMoisture1 %>% unique()
 
+soil_moisture_df<-main_df %>%
+  transmute(ParentGlobalID=ParentGlobalID,
+            WaterInChannel_score = 2*baseflowscore,
+            SoilMoisture1=case_when(WaterInChannel_score>0~2, MaxPoolDepth>0~2,
+                                    SoilMoisture1=="dry"~0,
+                                    SoilMoisture1=="partiallydry"~1,
+                                    SoilMoisture1=="saturated"~2,
+                                    T~NA_real_),
+            SoilMoisture2=case_when(WaterInChannel_score>0~2, MaxPoolDepth>0~2,
+                                    SoilMoisture2=="dry"~0,
+                                    SoilMoisture2=="partiallydry"~1,
+                                    SoilMoisture2=="saturated"~2,
+                                    T~NA_real_),
+            SoilMoisture3=case_when(WaterInChannel_score>0~2, MaxPoolDepth>0~2,
+                                    SoilMoisture3=="dry"~0,
+                                    SoilMoisture3=="partiallydry"~1,
+                                    SoilMoisture3=="saturated"~2,
+                                    T~NA_real_)) %>%
+  pivot_longer(cols=c(SoilMoisture1, SoilMoisture2, SoilMoisture3)) %>%
+  group_by(ParentGlobalID) %>%
+  summarise(SoilMoist_MeanScore = mean(value, na.rm=T),
+            SoilMoist_MaxScore = max(value, na.rm=T),
+            SoilMeasures=sum(!is.na(value))
+  ) %>% 
+  ungroup() %>%
+  select(-SoilMeasures)
+
+has_moisture<-main_df %>% 
+  filter(ParentGlobalID %in% soil_moisture_df$ParentGlobalID[is.na(soil_moisture_df$SoilMoist_MeanScore)]) %>%
+  select(Database, ParentGlobalID, SiteCode, CollectionDate, SurfaceFlow_pct,SurfaceSubsurfaceFlow_pct, IsolatedPools_number) %>%
+  filter(SurfaceFlow_pct>0 | SurfaceSubsurfaceFlow_pct>0 | IsolatedPools_number>0)
+
+soil_moisture_df$SoilMoist_MeanScore[soil_moisture_df$ParentGlobalID %in% has_moisture$ParentGlobalID]<-2
+soil_moisture_df$SoilMoist_MaxScore[soil_moisture_df$ParentGlobalID %in% has_moisture$ParentGlobalID]<-2
+
+main_df<-main_df %>%
+  left_join(soil_moisture_df %>% select(ParentGlobalID, SoilMoist_MeanScore,SoilMoist_MaxScore))
+
+soil_moisture_df %>% filter(is.na(SoilMoist_MeanScore)) %>%
+  left_join(main_df %>% select(Database, ParentGlobalID, SiteCode, CollectionDate) ) %>%
+  select(-ParentGlobalID, -starts_with("Soil")) %>% 
+  arrange(Database, SiteCode, CollectionDate) %>% 
+  clipr::write_clip()
 
 #AMPHIBIANS
 #Calculate amphibian p/a from NESE data
@@ -355,6 +408,7 @@ main_df<-main_df %>%
                                    T~"OTHER")) %>%
   #Get rid of interim metrics
   select(-Amphib_count)
+
 
 #### HYDROVEG ####
 hydroveg_df<- 
@@ -438,9 +492,92 @@ ai_df<-
   filter(AI_Taxon != "Na" & AI_Taxon != "na" & !(is.na(AI_Taxon)))
 skim_without_charts(ai_df)
 
-ai_df %>% filter(AI_Taxon=="V1") %>% 
-  inner_join(main_df %>% select(ParentGlobalID, SiteCode, Database, CollectionDate))
+ai_df %>% filter(AI_Taxon=="Ranis") %>% 
+  select(-SiteCode) %>%
+  inner_join(main_df %>% select(ParentGlobalID, SiteCode, Database, CollectionDate)) %>% 
+  arrange(Database, SiteCode, CollectionDate) %>%
+  as.data.frame()
 ai_df$AI_Taxon %>% unique() %>% sort()
 
 "{fccec8b8-25d5-443d-9a1b-3f28289199d3}" %in% main_df$ParentGlobalID
 main_df %>% filter(ParentGlobalID=="{fccec8b8-25d5-443d-9a1b-3f28289199d3}")
+
+ai_df %>%
+  
+#################
+BioPreds<-c(
+  #NM varz
+  "fishabund_score2","BMI_score","Algae_score","DifferencesInVegetation_score",
+  "UplandRootedPlants_score","iofb_score",
+  #BMI varz
+  "mayfly_abundance",
+  "perennial_abundance","perennial_taxa","perennial_live_abundance", #"Perennial" means that it's a metric based on perennial indicator taxa from Mazacanno and Black 2012
+  #Vertebrates
+  "snake_score","turt_score","vert_score",
+  # "vertvoc_score","vertvoc_sumscore",#"frogvoc_score",
+  "vert_sumscore",
+  #Hydrophytes
+  "hydrophytes_present",
+  "hydrophytes_present_noflag",
+  #Novel bio
+  "alglive_cover_score","algdead_cover_score","algdead_noupstream_cover_score",
+  "alglivedead_cover_score",
+  "moss_cover_score","liverwort_cover_score","PctShading",
+  "ripariancorr_score", #This is from the PNW ancillary data
+  #A few novel BMI metrics
+  "TotalAbundance", "Richness",  
+  "EPT_abundance", "EPT_taxa", "EPT_relabd","EPT_reltaxa",
+  "GOLD_abundance", "GOLD_taxa", "OCH_abundance",   "OCH_taxa",
+  "GOLD_relabd", "GOLD_reltaxa", "OCH_relabd","OCH_reltaxa", "GOLDOCH_relabd","GOLDOCH_reltaxa",  
+  "Noninsect_abundance", "Noninsect_taxa", "Noninsect_relabund",   "Noninsect_reltaxa"
+)
+#These require taxonomic IDs and can't be evaluated until those data are reconciled
+#OK now
+BugPreds<-c("TotalAbundance", "Richness",  
+            "EPT_abundance", "EPT_taxa", "EPT_relabd","EPT_reltaxa",
+            "GOLD_abundance", "GOLD_taxa", "OCH_abundance",   "OCH_taxa",
+            "GOLD_relabd", "GOLD_reltaxa", "OCH_relabd","OCH_reltaxa", "GOLDOCH_relabd","GOLDOCH_reltaxa",  
+            "Noninsect_abundance", "Noninsect_taxa", "Noninsect_relabund",   "Noninsect_reltaxa")
+setdiff(BioPreds, names(metrics_df))
+
+
+HydroPreds<-c(
+  #NM varz
+  "WaterInChannel_score","HydricSoils_score","springs_score",
+  #Others and novel
+  "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","WoodyJams_number",
+  "SoilMoist_MeanScore",
+  "SoilMoist_MaxScore"
+)
+
+WaterPreds<-c("WaterInChannel_score", "springs_score", 
+              "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
+
+HydroPreds_nowater<-HydroPreds %>%  setdiff(WaterPreds)
+
+setdiff(HydroPreds, names(metrics_df))
+
+GeomorphPreds<-c(
+  #NM varz
+  "Sinuosity_score","ChannelDimensions_score","RifflePoolSeq_score",
+  "SubstrateSorting_score","SedimentOnPlantsDebris_score",
+  #Other varz
+  "BankWidthMean","Slope"#"erosion_score","floodplain_score"
+)
+setdiff(GeomorphPreds, names(metrics_df))
+metrics_df$Slope
+
+GISPreds<-c(#"Eco1","Eco2","Eco3",
+  "Elev_m",
+  "tmean","tmax","tmin",
+  "MeanSnowPersistence_10","MeanSnowPersistence_05","MeanSnowPersistence_01",
+  "ppt","ppt.m01","ppt.m02","ppt.m03","ppt.m04","ppt.m05","ppt.m06","ppt.m07","ppt.m08","ppt.m09","ppt.m10","ppt.m11","ppt.m12")
+
+gis_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+GISPreds %in% names(gis_df)
+setdiff(HydroPreds, names(main_df))
+###################
+
+main_metrics<-main_df %>%
+  inner_join(xwalk_df %>% rename(SiteCode=sitecode)) %>%
+  inner_join(gis_df )
