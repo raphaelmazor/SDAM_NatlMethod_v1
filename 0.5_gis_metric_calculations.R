@@ -200,7 +200,17 @@ gis_metrics_df<-mydf_prism  %>%
          SnowDom_SP05 = case_when(MeanSnowPersistence_05<25~"Not snow-dominated", # FIX NA's
                                   T~"Snow-dominated"),
          SnowDom_SP01 = case_when(MeanSnowPersistence_01<25~"Not snow-dominated",
-                                  T~"Snow-dominated"))
+                                  T~"Snow-dominated"),
+         ppt.234 = ((ppt.m02 + ppt.m03 + ppt.m04)/3),
+         ppt.567 = ((ppt.m05 + ppt.m06 + ppt.m07)/3),
+         ppt.8910 = ((ppt.m08 + ppt.m09 + ppt.m10)/3),
+         ppt.11121 = ((ppt.m11 + ppt.m12 + ppt.m01)/3),
+         temp.234 = ((temp.m02 + temp.m03 + temp.m04)/3),
+         temp.567 = ((temp.m05 + temp.m06 + temp.m07)/3),
+         temp.8910 = ((temp.m08 + temp.m09 + temp.m10)/3),
+         temp.11121 = ((temp.m11 + temp.m12 + temp.m01)/3)
+         
+         )
 
 skim_without_charts(gis_metrics_df)
 
