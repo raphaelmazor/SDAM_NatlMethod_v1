@@ -46,6 +46,7 @@ main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 
 main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
+  filter(sitecode %in% xwalk_df$sitecode) %>%
   transmute( 
     #SITE AND SAMPLE METADATA
     Download_date = Sys.time(),
@@ -199,11 +200,11 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     fishabund_note,#NESE
     Fish_score_NM = abundancescorefish , # Not recorded for NESE
     Fish_score_NC = case_when(number_of_fish =="0"~0,
-                           number_of_fish =="1"~0.5,
-                           number_of_fish =="2"~1,
-                           number_of_fish =="3"~1,
-                           number_of_fish ==">3"~1.5,
-                           T~NA_real_),
+                              number_of_fish =="1"~0.5,
+                              number_of_fish =="2"~1,
+                              number_of_fish =="3"~1,
+                              number_of_fish ==">3"~1.5,
+                              T~NA_real_),
     Fish_PA = case_when(number_of_fish>0~1,
                         number_of_fish==">3"~1,
                         Fish_score_NM>0~1,
@@ -219,10 +220,10 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     #Vertebrate_notes= observedabundancenote, # Not recorded for NESE
     # IOFB_yn= observedfungi, 
     ironox_bfscore_NM = case_when(observedfungi=="present"~3,
-                               observedfungi %in% c("notdetected","notdectected")~0,
-                               is.na(observedfungi)~0,
-                               is.na(ironox_bfscore)~0,
-                               T~ironox_bfscore), 
+                                  observedfungi %in% c("notdetected","notdectected")~0,
+                                  is.na(observedfungi)~0,
+                                  is.na(ironox_bfscore)~0,
+                                  T~ironox_bfscore), 
     ironox_bfnotes,#NESE
     Snakes_yn= observedsnakes, # Not recorded for NESE
     # Snakes_abundance= obsnakesabundance, # Not recorded for NESE
@@ -339,10 +340,10 @@ soil_moisture_df$SoilMoist_MaxScore[soil_moisture_df$ParentGlobalID %in% has_moi
 main_df<-main_df %>%
   left_join(soil_moisture_df %>% select(ParentGlobalID, SoilMoist_MeanScore,SoilMoist_MaxScore))
 
-soil_moisture_df %>% filter(is.na(SoilMoist_MeanScore)) %>%
-  left_join(main_df %>% select(Database, ParentGlobalID, SiteCode, CollectionDate) ) %>%
-  select(-ParentGlobalID, -starts_with("Soil")) %>% 
-  arrange(Database, SiteCode, CollectionDate) %>% 
+# soil_moisture_df %>% filter(is.na(SoilMoist_MeanScore)) %>%
+#   left_join(main_df %>% select(Database, ParentGlobalID, SiteCode, CollectionDate) ) %>%
+#   select(-ParentGlobalID, -starts_with("Soil")) %>% 
+#   arrange(Database, SiteCode, CollectionDate) %>% 
   clipr::write_clip()
 
 #AMPHIBIANS
@@ -478,32 +479,38 @@ main_df<-main_df %>%
 
 
 #######AQUATIC INVERTEBRATES
-ai_df<-
-  read_csv("https://sdamchecker.sccwrp.org/checker/download/aquatic_invertebrates-all") %>%
-  transmute(
-    ParentGlobalID = parentglobalid,
-    AIGlobalID=globalid,
-    SiteCode = ai_sitecode, 
-    AI_Taxon=taxon,
-    AI_Lifestage=lifestage,
-    AI_LiveDead=ai_living, 
-    AI_Abundance=case_when(ai_abundance<0~NA_real_, T~ai_abundance), #Negative values are actually blanks
-    AI_Notes= ai_notes) %>%
-  filter(AI_Taxon != "Na" & AI_Taxon != "na" & !(is.na(AI_Taxon)))
-skim_without_charts(ai_df)
+#Calculated in 0.5_ai_cleanup.R
+ai_metrics<-read_csv("Data/ai_metrics.csv")
+ai_mets<-setdiff(names(ai_metrics), "ParentGlobalID")
 
-ai_df %>% filter(AI_Taxon=="Ranis") %>% 
-  select(-SiteCode) %>%
-  inner_join(main_df %>% select(ParentGlobalID, SiteCode, Database, CollectionDate)) %>% 
-  arrange(Database, SiteCode, CollectionDate) %>%
-  as.data.frame()
-ai_df$AI_Taxon %>% unique() %>% sort()
+ai_metrics2<-main_df %>%
+  select(ParentGlobalID) %>%
+  left_join(ai_metrics) 
+ai_metrics2[is.na(ai_metrics2)]<-0
+main_df<-main_df %>%
+  left_join(ai_metrics2)
 
-"{fccec8b8-25d5-443d-9a1b-3f28289199d3}" %in% main_df$ParentGlobalID
-main_df %>% filter(ParentGlobalID=="{fccec8b8-25d5-443d-9a1b-3f28289199d3}")
+#######GEOSPATIAL METRICS
+#Calculated in 0.5_gis_metric_calculations.R
+gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+setdiff(main_df$SiteCode, gis_metrics_df$sitecode)
+# main_df<-
+  main_df %>%
+  inner_join(gis_metrics_df)
 
-ai_df %>%
-  
+
+
+  gis_metrics_df$SiteCode %>% duplicated()
+
+
+
+
+
+
+
+
+
+
 #################
 BioPreds<-c(
   #NM varz

@@ -19,7 +19,7 @@ library(skimr)
 main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
-  transmute( 
+    transmute( 
     #SITE AND SAMPLE METADATA
     Download_date = Sys.time(),
     Database= origin_database,
@@ -531,24 +531,27 @@ ai_combined <- ai_df %>%
       AI_Family %in% c("Capniidae", "Chloroperlidae", "Leuctridae", "Nemouridae","Peltoperlidae", 
                        "Perlidae", "Perlodidae", "PLECOPTERA","Pteronarcyidae", "Taeniopterygidae")~"Plecoptera",
       AI_Family %in% c("Apataniidae", "Brachycentridae", "Calamoceratidae", "Glossosomatidae", "Helicopsychidae", 
-                       "Hydropsychidae", "Hydroptilidae","Lepidostomatidae","Leptoceridae", "Limnephilidae", "Molannidae",
-                       "Odontoceridae",  "Philopotamidae", "Phryganeidae","Polycentropodidae","Hydrobiosidae",
+                       "Hydropsychidae", "Hydroptilidae","Lepidostomatidae","Leptoceridae", "Limnephilidae", 
+                       "Molannidae","Rossianidae",
+                       "Odontoceridae",  "Philopotamidae", "Phryganeidae","Polycentropodidae","Hydrobiosidae","Goeridae",
                        "Rhyacophilidae","Sericostomatidae", "TRICHOPTERA","Uenoidae","Psychomyiidae")~"Trichoptera",
       AI_Family %in% c("Aeshnidae", "Calopterygidae", "Coenagrionidae", "Cordulegastridae","Corduliidae", 
                        "Gomphidae", "Lestidae", "Libellulidae","Macromiidae", "ODONATA")~"Odonata",
-      AI_Family %in% c("Belostomatidae", "Corixidae", "Gerridae", "HEMIPTERA", "Naucoridae", "Saldidae",
+      AI_Family %in% c("Belostomatidae", "Corixidae", "Gerridae", "HEMIPTERA", "Naucoridae", "Saldidae","Gelastocoridae",
+                       "Hebridae","Macroveliidae",
                        "Nepidae", "Notonectidae", "Pleidae", "Veliidae")~"Hemiptera",
       AI_Family %in% c("COLEOPTERA", "Dryopidae", "Dytiscidae", "Elmidae","Gyrinidae", "Haliplidae",
-                       "Lutrochidae","Hydraenidae","Hydraenidae","Helophoridae",
-                       "Staphylinidae","Amphizoidae",
+                       "Lutrochidae","Hydraenidae","Hydraenidae","Helophoridae","Eulichadidae","Georissidae",
+                       "Staphylinidae","Amphizoidae","Carabidae",
                        "Hydrochidae", "Hydrophilidae", "Psephenidae","Ptilodactylidae","Scirtidae")~"Coleoptera",
       AI_Family %in% c("Athericidae", "Blephariceridae", "Ceratopogonidae", "Chaoboridae", 
-                       "Chironomidae", "Sciomyzidae","Syrphidae",
+                       "Chironomidae", "Sciomyzidae","Syrphidae","Tanyderidae",
                        "Culicidae","Thaumaleidae","Pelecorhynchidae",
                        "DIPTERA", "Dixidae", "Dolichopodidae","Empididae","Ephydridae","Limoniidae",
                        "Muscidae","Pediciidae","Psychodidae","Ptychopteridae", "Simuliidae", 
                        "Stratiomyidae", "Tabanidae", "Tipulidae")~"Diptera",
-      AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae","Lithoglyphidae", "Physidae", "Planorbidae", "Bithyniidae",
+      AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae","Lithoglyphidae", "Physidae", 
+                       "Planorbidae", "Bithyniidae","Pomatiopsidae",
                        "Thiaridae","Lymnaeidae","Pleuroceridae","Valvatidae","Viviparidae")~"GASTROPODA" ,#Most are basomatomorpha
       AI_Family %in% c("BIVALVE", "Corbiculidae", "Dreissenidae", "Margaritiferidae", "Sphaeriidae",
                        "Unionidae")~"BIVALVIA",

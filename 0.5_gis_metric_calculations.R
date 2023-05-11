@@ -21,7 +21,11 @@ gis_wm<-read_csv("Data/GISmetrics/gis_metrics_WM.csv") %>% dplyr::select(-`...1`
 # identical(names(gis_nese),names(gis_wm))
 # identical(names(gis_wm),names(gis_nese))
 
-gis_already<-bind_rows(gis_wm, gis_gp, gis_nese)
+gis_already<-bind_rows(gis_wm, gis_gp, gis_nese) %>%
+  filter(SiteCode %in% xwalk_df$sitecode) %>%
+  group_by(SiteCode) %>%
+  slice_head(n=1) 
+  
 
 setdiff(xwalk_df$sitecode, gis_already$SiteCode)
 need_gis_df<-xwalk_df %>%
@@ -188,7 +192,7 @@ mydf_sf_snow_combined<-mydf_sf_10km %>%
 
 
 
-gis_metrics_df<-mydf_prism  %>% 
+gis_newmetrics_df<-mydf_prism  %>% 
   # inner_join(ColdWetMonths) %>%
   inner_join(mydf_sf_snow_combined %>%
                as.data.frame() %>%
@@ -200,7 +204,13 @@ gis_metrics_df<-mydf_prism  %>%
          SnowDom_SP05 = case_when(MeanSnowPersistence_05<25~"Not snow-dominated", # FIX NA's
                                   T~"Snow-dominated"),
          SnowDom_SP01 = case_when(MeanSnowPersistence_01<25~"Not snow-dominated",
-                                  T~"Snow-dominated"),
+                                  T~"Snow-dominated"))
+setdiff(names(gis_already), names(gis_newmetrics_df))
+         
+gis_metrics_df<-gis_already %>%
+  dplyr::select(-CalcTime) %>%
+  bind_rows( gis_newmetrics_df) %>%
+  mutate(
          ppt.234 = ((ppt.m02 + ppt.m03 + ppt.m04)/3),
          ppt.567 = ((ppt.m05 + ppt.m06 + ppt.m07)/3),
          ppt.8910 = ((ppt.m08 + ppt.m09 + ppt.m10)/3),
