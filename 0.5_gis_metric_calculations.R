@@ -30,7 +30,7 @@ gis_already<-bind_rows(gis_wm, gis_gp, gis_nese) %>%
 setdiff(xwalk_df$sitecode, gis_already$SiteCode)
 need_gis_df<-xwalk_df %>%
   filter(!sitecode %in% gis_already$SiteCode)
-
+need_gis_df[duplicated(need_gis_df$sitecode),]
 #####
 
 mydf_sf<-st_as_sf(need_gis_df,

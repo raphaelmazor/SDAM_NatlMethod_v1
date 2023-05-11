@@ -1,11 +1,14 @@
 library(tidyverse)
 
 #Import xwalk<-
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
+xwalk_df<-#read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
+  read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
   mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
                                     T~Region_detail) %>%
-           factor(levels=c("AW","WM","GP","NE","SE", "CB")),
-         Class=factor(Class, levels=c("P","I","E","U")))
+                                    factor(levels=c("AW","WM","GP","NE","SE","PNW", "CB")),
+         Class=case_when(!Class %in% c("P","I","E","U")~"U",T~Class),
+         Class=factor(Class, levels=c("P","I","E","U"))) %>%
+  filter(Region!="PNW")
 
 EastDBs<-c("NESE Baseline Revisits v2", "NESE Baseline v1", "NESE Validation v1")
 WestDBs<-c("WMBR_1_1","WEx_SDAM_0","WMBR_2","WMV_1","FD003","FD004")
@@ -44,7 +47,8 @@ main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 # select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
 # group_by(Region_DB) %>% skim_without_charts()
 
-main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
+main_df<-   main_raw %>%
+  # inner_join(main_raw %>% select(-lat, -long)) %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
   # filter(origin_database %in% myDBs) %>%
   filter(sitecode %in% xwalk_df$sitecode) %>%
   transmute( 
@@ -57,6 +61,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
                           T~"Other"),
     ParentGlobalID = globalid,
     SiteCode = sitecode,
+    # Class, lat, long,
     SiteName = sitename,
     Assessors = assessor,
     Recorder= recorder, QA=qa,
@@ -64,8 +69,8 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
     CreationDate= creationdate,
     Creator=creator,
     EditDate=editdate,
-    Lat_field= lat, 
-    Long_field= long,
+    # Lat_field= lat, 
+    # Long_field= long,
     Weather=weathernow,
     PctCloudCover = case_when(is.na(cloudynow) == T ~ 0,T~cloudynow), # Replace missing cloud cover with zero
     rain_yesno, #NESE only
@@ -211,7 +216,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
                         is.na(Fish_score_NM) & is.na(number_of_fish)~0,
                         T~0), #Both East and Other regions
     Fish_PA_nomosq = (Fish_PA*(Mosquitofish=="no")), #Both East and Other regions
-    #BMI_score= abundancescorebenthic,# Not recorded for NESE
+    BMI_score= abundancescorebenthic,# Not recorded for NESE
     Algae_score= abundancealgae, 
     
     
@@ -288,7 +293,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
                                            fp_entrenchmentratio_mean<2.5~1.5,
                                            fp_entrenchmentratio_mean>=2.5~3,
                                            T~NA_real_),
-         BankwidthMean = mean(c(Bankwidth_0, Bankwidth_15, Bankwidth_30), na.rm = T),
+         BankWidthMean = mean(c(Bankwidth_0, Bankwidth_15, Bankwidth_30), na.rm = T),
          PctShading=mean(c(dens_UU/.17, dens_UL/.17, dens_UR/.17, dens_UD/.17,
                            dens_MU/.17, dens_ML/.17, dens_MR/.17, dens_MD/.17,
                            dens_DU/.17, dens_DL/.17, dens_DR/.17, dens_DD/.17), na.rm = T)) %>%
@@ -296,7 +301,7 @@ main_df<- main_raw %>% #read_csv("https://sdamchecker.sccwrp.org/checker/downloa
   #Eliminate interim metrics used for calculating other metrics
   select(-Bankwidth_0, -Bankwidth_15, -Bankwidth_30,
          -fp_entrenchmentratio1, -fp_entrenchmentratio2, -fp_entrenchmentratio3, -fp_entrenchmentratio_mean,
-         -starts_with("dens_"))
+         -starts_with("dens_")) 
 
 
 ####Soil moisture
@@ -344,7 +349,7 @@ main_df<-main_df %>%
 #   left_join(main_df %>% select(Database, ParentGlobalID, SiteCode, CollectionDate) ) %>%
 #   select(-ParentGlobalID, -starts_with("Soil")) %>% 
 #   arrange(Database, SiteCode, CollectionDate) %>% 
-  clipr::write_clip()
+#   clipr::write_clip()
 
 #AMPHIBIANS
 #Calculate amphibian p/a from NESE data
@@ -359,7 +364,7 @@ frog_species<-c("Acris","Acris crepitans","Acris crepitans blanchardi","Acris gr
                 "Incilius","Incilius nebulifer",
                 "Pseudacris","Pseudacris brachyphona","Pseudacris fouquettei","Pseudacris nigrita","Ranidae" )
 multiyear_tadpoles<-c("Lithobates catesbeianus", "Lithobates hecksheri","Lithobates virgatipes")
-
+setdiff(frog_species, multiyear_tadpoles)
 
 amphib_df<-read_csv("https://sdamchecker.sccwrp.org/checker/download/amphibians-all") %>%
   transmute(
@@ -493,76 +498,63 @@ main_df<-main_df %>%
 #######GEOSPATIAL METRICS
 #Calculated in 0.5_gis_metric_calculations.R
 gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
-setdiff(main_df$SiteCode, gis_metrics_df$sitecode)
-# main_df<-
+setdiff(main_df$SiteCode, gis_metrics_df$SiteCode)
+main_df<-
   main_df %>%
   inner_join(gis_metrics_df)
-
-
-
-  gis_metrics_df$SiteCode %>% duplicated()
-
-
-
-
-
-
-
-
-
-
 #################
+
+
+
 BioPreds<-c(
-  #NM varz
-  "fishabund_score2","BMI_score","Algae_score","DifferencesInVegetation_score",
-  "UplandRootedPlants_score","iofb_score",
-  #BMI varz
-  "mayfly_abundance",
-  "perennial_abundance","perennial_taxa","perennial_live_abundance", #"Perennial" means that it's a metric based on perennial indicator taxa from Mazacanno and Black 2012
-  #Vertebrates
-  "snake_score","turt_score","vert_score",
-  # "vertvoc_score","vertvoc_sumscore",#"frogvoc_score",
-  "vert_sumscore",
-  #Hydrophytes
-  "hydrophytes_present",
-  "hydrophytes_present_noflag",
-  #Novel bio
-  "alglive_cover_score","algdead_cover_score","algdead_noupstream_cover_score",
-  "alglivedead_cover_score",
-  "moss_cover_score","liverwort_cover_score","PctShading",
-  "ripariancorr_score", #This is from the PNW ancillary data
-  #A few novel BMI metrics
-  "TotalAbundance", "Richness",  
-  "EPT_abundance", "EPT_taxa", "EPT_relabd","EPT_reltaxa",
-  "GOLD_abundance", "GOLD_taxa", "OCH_abundance",   "OCH_taxa",
-  "GOLD_relabd", "GOLD_reltaxa", "OCH_relabd","OCH_reltaxa", "GOLDOCH_relabd","GOLDOCH_reltaxa",  
-  "Noninsect_abundance", "Noninsect_taxa", "Noninsect_relabund",   "Noninsect_reltaxa"
+  #Aquatic invertebrates
+  ##ai_mets
+  "TotalAbundance", "Richness", "mayfly_abundance", "perennial_PNW_abundance", 
+  "perennial_PNW_taxa", "perennial_PNW_live_abundance", "perennial_NC_abundance", 
+  "perennial_NC_taxa", "perennial_NC_live_abundance", "EPT_abundance", 
+  "EPT_taxa", "EPT_relabd", "EPT_reltaxa", "GOLD_abundance", "GOLD_taxa", 
+  "OCH_abundance", "OCH_taxa", "Noninsect_abundance", "Noninsect_taxa", 
+  "Noninsect_relabund", "Noninsect_reltaxa", "GOLD_relabd", "GOLD_reltaxa", 
+  "OCH_relabd", "OCH_reltaxa", "GOLDOCH_relabd", "GOLDOCH_reltaxa", 
+  "Crayfish_abundance", "Crayfish_taxa", "Mollusk_abundance", "Mollusk_taxa", 
+  "Bivalves_NonFG_Abundance", "Clam_Fingernail_Abundance", "TolRelAbund", 
+  "TolRelAbundAlt", "NonTolTaxa", "NonTolTaxaAlt", "TolTaxa", "TolTaxaAlt",
+  ##other invert metrics
+  #BMI_score not calculated for NESE
+  #Vegetation
+  "hydrophytes_present","hydrophytes_present_noflag",
+  "UplandRootedPlants_score",# "FibrousRootedPlants_score" Only in NESE
+  "DifferencesInVegetation_score", "Moss_cover","Liverwort_cover",
+  "PctShading",
+  #algae
+  "AlgalCover_Live","AlgalCover_LiveOrDead","AlgalCover_LiveOrDead_NoUpstream",#Algae_score not calculated for NESE
+  #Fish
+  "Fish_score_NM","Fish_PA","Fish_PA_nomosq",
+  #Other bio
+  "ironox_bfscore_NM"
 )
-#These require taxonomic IDs and can't be evaluated until those data are reconciled
-#OK now
-BugPreds<-c("TotalAbundance", "Richness",  
-            "EPT_abundance", "EPT_taxa", "EPT_relabd","EPT_reltaxa",
-            "GOLD_abundance", "GOLD_taxa", "OCH_abundance",   "OCH_taxa",
-            "GOLD_relabd", "GOLD_reltaxa", "OCH_relabd","OCH_reltaxa", "GOLDOCH_relabd","GOLDOCH_reltaxa",  
-            "Noninsect_abundance", "Noninsect_taxa", "Noninsect_relabund",   "Noninsect_reltaxa")
-setdiff(BioPreds, names(metrics_df))
+#HYDROLOGIC INDICATORS
+
 
 
 HydroPreds<-c(
   #NM varz
-  "WaterInChannel_score","HydricSoils_score","springs_score",
+  "WaterInChannel_score","HydricSoils_score","springs_score_NM",
   #Others and novel
   "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","WoodyJams_number",
-  "SoilMoist_MeanScore",
-  "SoilMoist_MaxScore"
+  "SoilMoist_MeanScore",  "SoilMoist_MaxScore"
 )
 
-WaterPreds<-c("WaterInChannel_score", "springs_score", 
-              "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
+WaterPreds<-c("WaterInChannel_score", "springs_score_NM", 
+              "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct",
+              "IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
 
-HydroPreds_nowater<-HydroPreds %>%  setdiff(WaterPreds)
-
-setdiff(HydroPreds, names(metrics_df))
+#GEOMORPH INDICATORS
+main_df %>%
+  # select(Region_DB, ironox_bfscore_NM) %>%
+  select(Region_DB, contains("SedimentOnPlantsDebris_score")) %>%
+  group_by(Region_DB) %>%
+  skim_without_charts()
 
 GeomorphPreds<-c(
   #NM varz
@@ -571,20 +563,39 @@ GeomorphPreds<-c(
   #Other varz
   "BankWidthMean","Slope"#"erosion_score","floodplain_score"
 )
-setdiff(GeomorphPreds, names(metrics_df))
-metrics_df$Slope
 
 GISPreds<-c(#"Eco1","Eco2","Eco3",
-  "Elev_m",
-  "tmean","tmax","tmin",
-  "MeanSnowPersistence_10","MeanSnowPersistence_05","MeanSnowPersistence_01",
-  "ppt","ppt.m01","ppt.m02","ppt.m03","ppt.m04","ppt.m05","ppt.m06","ppt.m07","ppt.m08","ppt.m09","ppt.m10","ppt.m11","ppt.m12")
+  "tmean", "tmax", "tmin", 
+  "ppt", 
+  "ppt.m01", "ppt.m02", "ppt.m03", "ppt.m04", "ppt.m05", "ppt.m06", "ppt.m07", "ppt.m08", "ppt.m09", "ppt.m10", "ppt.m11", "ppt.m12", 
+  "temp.m01", "temp.m02", "temp.m03", "temp.m04", "temp.m05", "temp.m06", "temp.m07", "temp.m08", "temp.m09", "temp.m10", "temp.m11", "temp.m12", 
+  "Elev_m", 
+  "MeanSnowPersistence_10", "MeanSnowPersistence_05", "MeanSnowPersistence_01", 
+  "SnowDom_SP10", "SnowDom_SP05", "SnowDom_SP01",
+  "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
+  "temp.234", "temp.567", "temp.8910", "temp.11121"
+)
 
-gis_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
-GISPreds %in% names(gis_df)
-setdiff(HydroPreds, names(main_df))
 ###################
+regionalizations<-c("beta_region", "ohwm_region", "corps_region")
 
-main_metrics<-main_df %>%
-  inner_join(xwalk_df %>% rename(SiteCode=sitecode)) %>%
-  inner_join(gis_df )
+junk<-xwalk_df %>% rename(SiteCode=sitecode) %>% inner_join(main_df) %>%
+  # main_df %>%
+  select(SiteCode, Class, CollectionDate, 
+         all_of(regionalizations),
+         #Region_DB, #Region, Region_detail2,
+         all_of(BioPreds), all_of(GeomorphPreds), all_of(HydroPreds), all_of(GISPreds)) 
+  
+example(lm)
+junk %>%
+  filter(Class!="U") %>%
+  filter(beta_region!="Caribbean") %>%
+  select(SiteCode, Class, CollectionDate, all_of(regionalizations),all_of(ai_mets)) %>%
+  pivot_longer(cols=all_of(regionalizations), names_to = "Regionalization",values_to = "Region_id") %>%
+  pivot_longer(cols=all_of(ai_mets), names_to = "Metric", values_to = "MetricResult") %>%
+  group_by(Regionalization, Region_id, Metric) %>%
+  summarise(n=length(Class), 
+            aov(Class~MetricResult) %>%
+              summary() %>% 
+              broom::tidy())
+  
