@@ -361,10 +361,12 @@ frog_species<-c("Acris","Acris crepitans","Acris crepitans blanchardi","Acris gr
                 "Hyla","Hyla chrysoscelis",
                 "Eleutherodactylidae",
                 "Lithobates","Lithobates catesbeianus","Lithobates clamitans","Lithobates palustris","Lithobates pipiens","Lithobates sphenocephalus","Lithobates sphenocephalus utricularius","Lithobates sylvaticus",
+                "Lithobates virgatipes","Lithobates hecksheri",
                 "Incilius","Incilius nebulifer",
                 "Pseudacris","Pseudacris brachyphona","Pseudacris fouquettei","Pseudacris nigrita","Ranidae" )
 multiyear_tadpoles<-c("Lithobates catesbeianus", "Lithobates hecksheri","Lithobates virgatipes")
 setdiff(frog_species, multiyear_tadpoles)
+
 
 amphib_df<-read_csv("https://sdamchecker.sccwrp.org/checker/download/amphibians-all") %>%
   transmute(
@@ -385,8 +387,9 @@ amphib_df<-read_csv("https://sdamchecker.sccwrp.org/checker/download/amphibians-
          Multiyear_Tadpole = Amphib_Species %in% multiyear_tadpoles 
   ) %>%
   filter(! Amphib_Species %in% c("None","None observed","Not recorded"))  
-setdiff(amphib_df$Amphib_Species , c(frog_species, salamander_species, multiyear_tadpoles)) 
-
+setdiff(amphib_df$Amphib_Species , c(frog_species, salamander_species, multiyear_tadpoles))
+setdiff( c(frog_species, salamander_species, multiyear_tadpoles),amphib_df$Amphib_Species) 
+setdiff(multiyear_tadpoles , frog_species)
 
 
 amphib_mets<-amphib_df %>%
