@@ -5,7 +5,9 @@ xwalk_df<-#read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
   read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
   mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
                                     T~Region_detail) %>%
-                                    factor(levels=c("AW","WM","GP","NE","SE","PNW", "CB")),
+           factor(levels=c("AW","WM","GP","NE","SE","PNW", "CB")),
+         all_region="USA",
+         conus_region=case_when(Region=="Caribbean"~"Non-CONUS",T~"CONUS"),
          Class=case_when(!Class %in% c("P","I","E","U")~"U",T~Class),
          Class=factor(Class, levels=c("P","I","E","U"))) %>%
   filter(Region!="PNW")
@@ -43,9 +45,9 @@ main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 #   filter(is.na(AlgalCover_Live) & !is.na(AlgScore2)) %>% as.data.frame()
 # group_by(Region_DB) %>% skim_without_charts()
 
-# main_df %>%
-# select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Hydric")) %>%
-# group_by(Region_DB) %>% skim_without_charts()
+main_df %>%
+select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Channel")) %>%
+group_by(Region_DB) %>% skim_without_charts()
 
 main_df<-   main_raw %>%
   # inner_join(main_raw %>% select(-lat, -long)) %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
@@ -126,7 +128,8 @@ main_df<-   main_raw %>%
     fp_entrenchmentratio1= case_when(fp_greaterthan=="yes"~2.5,T~fp_floodprone/fp_bankful),
     fp_entrenchmentratio2= case_when(fp_greaterthan2=="yes"~2.5,T~fp_floodprone2/fp_bankful2),
     fp_entrenchmentratio3= case_when(fp_greaterthan3=="yes"~2.5,T~fp_floodprone/fp_bankful3),
-    ChannelDimensions_method= "direct measurement",# Not recorded for NESE
+    ChannelDimensions_method= dimensionmethod,# Not recorded for NESE
+    ChannelDimensions_score_NM=gi_dimensionscore,
     RifflePoolSeq_score= gi_sequencescore, 
     RifflePoolSeq_notes= seqnotes,
     SubstrateSorting_score=gi_substratesorting, 
@@ -168,7 +171,10 @@ main_df<-   main_raw %>%
     ODL_score = hi_odl,# NESE
     ODL_notes = odlnotes, # NESE
     
-    HydricSoils_score=hydricsoils, #nearly complete
+    HydricSoils_score=#hydricsoils, #nearly complete
+      case_when(hydricsoils %in% c("present","3")~3,
+                hydricsoils %in% c("not_detected", "notdetected","not_assessed","0")~0, 
+                is.na(hydricsoils)~0),
     HydricSoils_locations=locations, 
     HydricSoils_notes= hydricnotes,
     
@@ -177,6 +183,7 @@ main_df<-   main_raw %>%
       is.na(woodyjams1) ==T ~ woody_jams,
       T~0 # Replace missing wood jams count with zero
     ), 
+    WoodyJams_number = case_when(is.na(WoodyJams_number)~0, T~WoodyJams_number),
     WoodyJams_source=case_when(is.na(woody_material)~trees_shrubs, 
                                T~woody_material),  # Same as trees_shrubs in other databases
     # WoodyJams_notes=woodyjamsnotes,# Not recorded for NESE
@@ -203,13 +210,13 @@ main_df<-   main_raw %>%
     # Mosquitofish = mosquitofish, #Not NESE
     # all_mosqfish,#NESE
     fishabund_note,#NESE
-    Fish_score_NM = abundancescorefish , # Not recorded for NESE
     Fish_score_NC = case_when(number_of_fish =="0"~0,
                               number_of_fish =="1"~0.5,
                               number_of_fish =="2"~1,
                               number_of_fish =="3"~1,
                               number_of_fish ==">3"~1.5,
                               T~NA_real_),
+    Fish_score_NM = abundancescorefish , # Not recorded for NESE
     Fish_PA = case_when(number_of_fish>0~1,
                         number_of_fish==">3"~1,
                         Fish_score_NM>0~1,
@@ -241,25 +248,28 @@ main_df<-   main_raw %>%
     #FrogVocalizations_yn= observedvocalfrogs, # Not recorded for NESE
     BiologicalIndicators_notes= observedabundancenote, # Not recorded for NESE
     
-    AlgalCover_Live=case_when(streambedlive %in% c("2 to 10%", "2-10%")~"2 to 10%",
-                              streambedlive %in% c("10 to 40%", "10-40%")~"10 to 40%",
-                              streambedlive %in% c("notdetected")~"Not detected",
-                              T~streambedlive) ,
-    AlgalCover_Dead=case_when(streambeddead %in% c("2 to 10%", "2-10%")~"2 to 10%",
-                              streambeddead %in% c("10 to 40%", "10-40%")~"10 to 40%",
-                              streambeddead %in% c("notdetected")~"Not detected",
-                              T~streambeddead) ,
-    AlgalCover_LiveOrDead = case_when(AlgalCover_Live==">40%" | AlgalCover_Dead==">40%"~">40%",
-                                      AlgalCover_Live=="10 to 40%" | AlgalCover_Dead=="10 to 40%"~"10 to 40%",
-                                      AlgalCover_Live=="2 to 10%" | AlgalCover_Dead=="2 to 10%"~"2 to 10%",
-                                      AlgalCover_Live=="<2%" | AlgalCover_Dead=="<2%"~"<2%",
-                                      AlgalCover_Live=="Not detected" & AlgalCover_Dead=="Not detected"~"Not detected",
-                                      T~"Other"
-    ),
+    AlgalCover_Live=case_when(streambedlive %in% c("notdetected")~0,
+                              streambedlive %in% c("<2%")~1,
+                              streambedlive %in% c("2 to 10%", "2-10%")~2,
+                              streambedlive %in% c("10 to 40%", "10-40%")~3,
+                              streambedlive %in% c(">40%")~4),
+    AlgalCover_Dead=case_when(streambeddead %in% c("notdetected")~0,
+                              streambeddead %in% c("<2%")~1,
+                              streambeddead %in% c("2 to 10%", "2-10%")~2,
+                              streambeddead %in% c("10 to 40%", "10-40%")~3,
+                              streambeddead %in% c(">40%")~4),
+    AlgalCover_LiveOrDead = case_when(AlgalCover_Live>=AlgalCover_Dead~AlgalCover_Live, T~AlgalCover_Dead),
+      # case_when(AlgalCover_Live==">40%" | AlgalCover_Dead==">40%"~">40%",
+      #           AlgalCover_Live=="10 to 40%" | AlgalCover_Dead=="10 to 40%"~"10 to 40%",
+      #           AlgalCover_Live=="2 to 10%" | AlgalCover_Dead=="2 to 10%"~"2 to 10%",
+      #           AlgalCover_Live=="<2%" | AlgalCover_Dead=="<2%"~"<2%",
+      #           AlgalCover_Live=="Not detected" & AlgalCover_Dead=="Not detected"~"Not detected",
+      #           T~"Other"
+      # ),
     AlgalCover_Upstream=streambeddeadmats,
-    AlgalCover_Live_NoUpstream = case_when(AlgalCover_Upstream=="yes"~"Not detected",T~AlgalCover_Live),
-    AlgalCover_Dead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~"Not detected",T~AlgalCover_Dead),
-    AlgalCover_LiveOrDead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~"Not detected",T~AlgalCover_LiveOrDead),
+    AlgalCover_Live_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Live),
+    AlgalCover_Dead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Dead),
+    AlgalCover_LiveOrDead_NoUpstream = case_when(AlgalCover_Live_NoUpstream>=AlgalCover_Dead_NoUpstream~AlgalCover_Live_NoUpstream, T~AlgalCover_Dead),
     AlgalCover_notes= streambedalgaenotes, 
     
     dens_UU=u_upstream,
@@ -275,8 +285,16 @@ main_df<-   main_raw %>%
     dens_DR=l_right,
     dens_DD=l_downstream, 
     
-    Moss_cover=bryophytemosses, 
-    Liverwort_cover=bryophyteliverworts,
+    Moss_cover=#bryophytemosses, 
+      case_when(bryophytemosses=="notdetected"~0,
+                bryophytemosses=="<2%"~1,
+                bryophytemosses=="2-10%"~2,
+                bryophytemosses==">10%"~3),
+    Liverwort_cover=#bryophyteliverworts,
+      case_when(bryophyteliverworts=="notdetected"~0,
+                bryophyteliverworts=="<2%"~1,
+                bryophyteliverworts=="2-10%"~2,
+                bryophyteliverworts==">10%"~3),
     Bryophyte_notes=bryophtyenotes,
     
     DifferencesInVegetation_score=vegetationdifferencescore, 
@@ -289,7 +307,7 @@ main_df<-   main_raw %>%
   rowwise() %>%
   mutate(fp_entrenchmentratio_mean=mean(c(fp_entrenchmentratio1,fp_entrenchmentratio2,fp_entrenchmentratio3), na.rm=T),
          fp_entrenchmentratio_mean=case_when(fp_entrenchmentratio_mean>2.5~2.5, T~fp_entrenchmentratio_mean),
-         ChannelDimensions_score=case_when(fp_entrenchmentratio_mean<1.2~0,
+         ChannelDimensions_score_NC=case_when(fp_entrenchmentratio_mean<1.2~0,
                                            fp_entrenchmentratio_mean<2.5~1.5,
                                            fp_entrenchmentratio_mean>=2.5~3,
                                            T~NA_real_),
@@ -301,9 +319,12 @@ main_df<-   main_raw %>%
   #Eliminate interim metrics used for calculating other metrics
   select(-Bankwidth_0, -Bankwidth_15, -Bankwidth_30,
          -fp_entrenchmentratio1, -fp_entrenchmentratio2, -fp_entrenchmentratio3, -fp_entrenchmentratio_mean,
-         -starts_with("dens_")) 
+         -starts_with("dens_")) %>%
+  mutate(ChannelDimensions_score= case_when(!is.na(ChannelDimensions_score_NC)~ChannelDimensions_score_NC,
+                                           !is.na(ChannelDimensions_score_NM)~ChannelDimensions_score_NM,
+                                           T~NA_real_))
 
-
+main_df %>% select(contains("dimens"))
 ####Soil moisture
 main_df$SoilMoisture1 %>% unique()
 
@@ -364,7 +385,7 @@ frog_species<-c("Acris","Acris crepitans","Acris crepitans blanchardi","Acris gr
                 "Lithobates virgatipes","Lithobates hecksheri",
                 "Incilius","Incilius nebulifer",
                 "Pseudacris","Pseudacris brachyphona","Pseudacris fouquettei","Pseudacris nigrita","Ranidae" )
-multiyear_tadpoles<-c("Lithobates catesbeianus", "Lithobates hecksheri","Lithobates virgatipes")
+multiyear_tadpoles<-c("Lithobates catesbeianus", "Lithobates hecksheri","Lithobates virgatipes", "Lithobates clamitans")
 setdiff(frog_species, multiyear_tadpoles)
 
 
@@ -505,6 +526,14 @@ setdiff(main_df$SiteCode, gis_metrics_df$SiteCode)
 main_df<-
   main_df %>%
   inner_join(gis_metrics_df)
+
+drn_df<-read_csv("Data/drainage_areas.csv")
+setdiff(xwalk_df$sitecode, drn_df$SITECODE)
+xwalk_df%>%
+  filter(!sitecode %in% drn_df$SITECODE) %>%
+  select(sitecode, lat, long) %>%
+  clipr::write_clip()
+
 #################
 
 
@@ -551,6 +580,7 @@ HydroPreds<-c(
 WaterPreds<-c("WaterInChannel_score", "springs_score_NM", 
               "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct",
               "IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
+HydroPreds_Indirect<-setdiff(HydroPreds, WaterPreds)
 
 #GEOMORPH INDICATORS
 main_df %>%
@@ -580,25 +610,142 @@ GISPreds<-c(#"Eco1","Eco2","Eco3",
 )
 
 ###################
-regionalizations<-c("beta_region", "ohwm_region", "corps_region")
+regionalizations<-c("beta_region", "ohwm_region", "corps_region","all_region")
 
-junk<-xwalk_df %>% rename(SiteCode=sitecode) %>% inner_join(main_df) %>%
-  # main_df %>%
+test_mets<-c(BioPreds, GeomorphPreds,HydroPreds_Indirect,
+             "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
+             "temp.234", "temp.567", "temp.8910", "temp.11121",
+             "Elev_m",  "MeanSnowPersistence_10") 
+test_mets<-setdiff(test_mets, c("Fish_score_NM","Fish_PA_"))
+
+rf_dat<-xwalk_df %>% 
+  rename(SiteCode=sitecode) %>% 
+  inner_join(main_df) %>%
   select(SiteCode, Class, CollectionDate, 
          all_of(regionalizations),
-         #Region_DB, #Region, Region_detail2,
-         all_of(BioPreds), all_of(GeomorphPreds), all_of(HydroPreds), all_of(GISPreds)) 
-  
-example(lm)
-junk %>%
+         all_of(test_mets)) %>%
   filter(Class!="U") %>%
+  droplevels() %>%
   filter(beta_region!="Caribbean") %>%
-  select(SiteCode, Class, CollectionDate, all_of(regionalizations),all_of(ai_mets)) %>%
-  pivot_longer(cols=all_of(regionalizations), names_to = "Regionalization",values_to = "Region_id") %>%
-  pivot_longer(cols=all_of(ai_mets), names_to = "Metric", values_to = "MetricResult") %>%
-  group_by(Regionalization, Region_id, Metric) %>%
-  summarise(n=length(Class), 
-            aov(Class~MetricResult) %>%
-              summary() %>% 
-              broom::tidy())
-  
+  na.omit()
+
+skim_without_charts(rf_dat)
+
+rf_dat_long<-rf_dat %>%
+  pivot_longer(cols=all_of(regionalizations), names_to = "Regionalization",values_to = "Region_id") 
+
+rf_sum<- rf_dat_long %>% select(Regionalization, Region_id) %>% unique() %>% arrange(Regionalization, Region_id)
+
+library(randomForest)
+rf_dat$Class %>% unique()
+
+my_rfs_dat<-lapply(1:nrow(rf_sum), function(i){
+  regz.i=rf_sum$Regionalization[i]
+  reg.i=rf_sum$Region_id[i]
+  xdf=rf_dat_long %>%
+    filter(Regionalization==regz.i & Region_id==reg.i) %>%
+    select(Class, all_of(test_mets)) 
+  # print(paste(regz.i, reg.i))
+  # xdf %>%
+  #   group_by(Class) %>%
+  #   tally() %>%
+  #   print()
+  # randomForest(Class~., importance=T, na.action = na.roughfix, data=xdf)
+})
+
+my_rfs_models<-lapply(1:nrow(rf_sum), function(i){
+  xdf<-my_rfs_dat[[i]]
+  regz.i=rf_sum$Regionalization[i]
+  reg.i=rf_sum$Region_id[i]
+  print(paste(regz.i, reg.i))
+  xdf %>%
+    group_by(Class) %>%
+    tally() %>%
+    print()
+  randomForest(Class~., importance=T, na.action = na.roughfix, data=xdf)
+})
+
+rf_sum$P <-sapply(my_rfs_dat, function(x){  x %>%    filter(Class=="P") %>%    nrow() })
+rf_sum$I <-sapply(my_rfs_dat, function(x){  x %>%    filter(Class=="I") %>%    nrow() })
+rf_sum$E <-sapply(my_rfs_dat, function(x){  x %>%    filter(Class=="E") %>%    nrow() })
+rf_sum$N <-sapply(my_rfs_dat, function(x){  x %>%        nrow() })
+rf_sum$ErrRate_all<-  sapply(my_rfs_models, function(x){ x$err.rate %>% tail(1)["OOB"]})
+rf_sum$ErrRate_P<-  sapply(my_rfs_models, function(x){ x$err.rate %>% tail(1)["P"]})
+rf_sum$ErrRate_I<-  sapply(my_rfs_models, function(x){ x$err.rate %>% tail(1)["I"]})
+rf_sum$ErrRate_E<-  sapply(my_rfs_models, function(x){ x$err.rate %>% tail(1)["E"]})
+
+junk<-my_rfs_models[[1]]
+junk$importance %>% 
+  as.data.frame() %>%
+  mutate(Regionalization="regz.i",
+         Region_id="reg.i",
+         Metric=row.names(junk$importance)) %>%
+  rename(P_imp=P, I_imp=I, E_imp=E)
+
+# rf_sum_importance<-crossing(rf_sum, tibble(Metric=test_mets))
+# rf_sum_importance$Importance_Acc<-sapply()
+
+rf_sum_importance<-lapply(1:nrow(rf_sum), function(i){
+  regz.i=rf_sum$Regionalization[i]
+  reg.i=rf_sum$Region_id[i]
+  mod.i=my_rfs_models[[i]]
+  # print(mod.i)
+  xmat=mod.i$importance
+  xdf=xmat %>%
+    as_tibble() %>%
+    mutate(Regionalization=regz.i,
+           Region_id=reg.i,
+           Metric=row.names(xmat)) %>%
+    rename(P_imp=P, I_imp=I, E_imp=E)
+
+}) %>% bind_rows() %>%
+  mutate(MetricType=case_when(Metric %in% GeomorphPreds~"Geomorphic",
+                              Metric %in% GISPreds~"GIS",
+                              Metric %in% HydroPreds_Indirect~"Hydro",
+                              Metric %in% BioPreds~"Bio",
+                              T~"Other" ),
+         RegLabel = paste(regionalizations, Region_id, sep="-"))
+
+rf_sum_importance %>% group_by(MetricType) %>% tally()
+ggplot(rf_sum_importance %>%
+         mutate(MeanDecreaseAccuracy=case_when(MeanDecreaseAccuracy<0~0,T~MeanDecreaseAccuracy),
+                Region_id = gsub("USACE ","", Region_id)), 
+       aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile()+
+  scale_fill_viridis_c(trans="sqrt")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(.~Regionalization, scales="free_x", space="free")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
+
+rf_sum_importance_long <-rf_sum_importance %>%
+  # rename(All_imp=MeanDecreaseAccuracy) %>%
+  pivot_longer(cols=c(P_imp, I_imp, E_imp))
+
+ggplot(rf_sum_importance_long, aes(x=Region_id, y=Metric, fill=value))+
+  geom_tile()+
+  scale_fill_viridis_c()+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(name~Regionalization, scales="free", space="free")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
+
+rf_sum_plotdat<-rf_sum %>%
+  mutate(Weight = N/3165) %>%
+  select(Regionalization, Region_id, Weight, starts_with("ErrRate_")) %>%
+  rename(P=ErrRate_P, I=ErrRate_I, E=ErrRate_E, Overall=ErrRate_all) %>%
+  pivot_longer(cols=c("E","I","P","Overall")) %>%
+  mutate(name=factor(name, levels=c("Overall","P","I","E")))
+ggplot(data=rf_sum_plotdat, aes(x=Region_id, y=value))+
+  geom_point(aes(color=name))+
+  geom_point(data = . %>% filter(name=="Overall"),
+             aes(color=name), size=3)+
+  geom_hline(data= rf_sum_plotdat %>%
+               filter(name=="Overall") %>%
+               group_by(Regionalization) %>%
+               summarise(WeightedMean = weighted.mean(value, Weight)),
+             aes(yintercept=WeightedMean),
+             linetype="dashed"
+             )+
+  facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  scale_color_brewer(palette="Set1", name="Error rate")+
+  ylab("Error rate")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
