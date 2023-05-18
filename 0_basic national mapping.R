@@ -72,7 +72,8 @@ xwalk_sf<-xwalk_df %>%
 xwalk_sf %>%
   st_join(ohwm_sf %>% select(ohwm_region, ohwm_id)) %>%
   # st_join(nwca_sf %>% select(nwca_region, nwca_id))
-  st_join(mlra_sf %>% select(corps_region, corps_id)) 
+  st_join(mlra_sf %>% select(corps_region, corps_id)) %>%
+  group_by(ohwm_region) %>% tally()
 
 write_csv(xwalk_sf %>%
             st_join(ohwm_sf %>% select(ohwm_region, ohwm_id)) %>%
@@ -87,6 +88,9 @@ write_csv(xwalk_sf %>%
 #   mutate(NWCA5 = case_when(WSA9  %in% c("NAP","UMW","SAP")~"EMU",
 #                            WSA9  %in% c("NPL","SPL","TPL")~"IPL",
 #                            T~WSA9))
+ggplot() +
+  geom_sf(data=ohwm_sf, aes(fill=SDAM)) +
+  geom_sf(data=xwalk_sf)
 
 all_regions_sf<-
   bind_rows(sdam_sf %>% mutate(TYPE="SDAM", STRAT=SDAM),
@@ -106,13 +110,14 @@ randpal_df<-tibble(pal=viridisLite::cividis(108),
 
 
 
-  ggplot()+geom_sf(data=nwca_sf, aes(fill=nwca_region))
+ggplot()+geom_sf(data=nwca_sf, aes(fill=nwca_region))
   
 ggplot()+
-  geom_sf(data=all_regions_sf %>% filter(TYPE!="Eco3") , aes(fill=STRAT))+
-  geom_sf(data=xwalk_sf, aes(shape=Class))+
-  geom_sf(data=all_regions_sf %>% filter(TYPE=="SDAM") %>% select(-TYPE) , fill=NA, color="chartreuse")+
-  facet_wrap(~TYPE)+
+  geom_sf(data=all_regions_sf %>% filter(TYPE!="Eco3") , aes(fill=STRAT), color="white")+
+  geom_sf(data=xwalk_sf %>% filter(Class!="U"), aes(shape=Class))+
+  # geom_sf(data=all_regions_sf %>% filter(TYPE=="SDAM") %>% select(-TYPE) , fill=NA, color="chartreuse")+
+  # facet_wrap(~TYPE)+
+  facet_grid(Class~TYPE)+
   # scale_fill_viridis_d(guide="none")+
   scale_fill_manual(values=randpal_df$pal, guide="none")+
   coord_sf(xlim=c(-125, -66.5),
@@ -122,8 +127,38 @@ ggplot()+
         axis.ticks = element_blank(),
         panel.grid = element_blank())
 
-xwalk_df%>%
-  filter(is.na(lat))
+
+ggplot()+
+  geom_sf(data=all_regions_sf %>% filter(TYPE=="MLRA") , aes(fill=STRAT), color="white")+
+  geom_sf(data=all_regions_sf %>% filter(TYPE=="MLRA") %>%
+            filter(corps_id %in% c(1,4,3)), fill="white", color="#31a354", size=1)+
+  # facet_grid(Class~TYPE)+
+  scale_fill_viridis_d(guide="none", option="inferno", begin=.1, end=.5)+
+  # scale_fill_manual(values=randpal_df$pal, guide="none")+
+  coord_sf(xlim=c(-125, -66.5),
+           ylim=c(25, 49.5))+
+  theme_bw()+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+
+
+ggplot()+
+  geom_sf(data=all_regions_sf %>% filter(TYPE=="MLRA") , fill="white", color="black")+
+  geom_sf(data=all_regions_sf %>% filter(TYPE=="MLRA") %>%
+            filter(corps_id %in% c(1,4,3)) %>%
+            mutate(Reg2 = STRAT), fill="steelblue", color=NA, size=1)+
+  facet_wrap(~Reg2, ncol=1)+
+  coord_sf(xlim=c(-125, -66.5),
+           ylim=c(25, 49.5))+
+  theme_bw()+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
 
 
 xwalk_sf2<-xwalk_sf %>%

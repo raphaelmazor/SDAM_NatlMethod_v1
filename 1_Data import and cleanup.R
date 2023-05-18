@@ -37,6 +37,10 @@ main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 # main_raw %>% filter(origin_database %in% WestDBs) %>% View()
 
 
+
+
+
+
 # main_df %>%
 #   select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Alg")) %>%
 #   mutate(AlgScore2 = case_when(Algae_score=="Not recorded"~NA_character_,
@@ -45,9 +49,9 @@ main_raw<-read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all")
 #   filter(is.na(AlgalCover_Live) & !is.na(AlgScore2)) %>% as.data.frame()
 # group_by(Region_DB) %>% skim_without_charts()
 
-main_df %>%
-select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Channel")) %>%
-group_by(Region_DB) %>% skim_without_charts()
+# main_df %>%
+# select(Region_DB,Database, SiteCode, CollectionDate, starts_with("Channel")) %>%
+# group_by(Region_DB) %>% skim_without_charts()
 
 main_df<-   main_raw %>%
   # inner_join(main_raw %>% select(-lat, -long)) %>% #read_csv("https://sdamchecker.sccwrp.org/checker/download/main-all") %>%
@@ -608,6 +612,8 @@ GISPreds<-c(#"Eco1","Eco2","Eco3",
   "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
   "temp.234", "temp.567", "temp.8910", "temp.11121"
 )
+write_csv(main_df, "NotForGit/Step1/main_df_step1.csv")
+write_csv(xwalk_df, "NotForGit/Step1/xwalk_df.csv")
 
 ###################
 regionalizations<-c("beta_region", "ohwm_region", "corps_region","all_region")
