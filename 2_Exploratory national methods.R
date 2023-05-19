@@ -143,7 +143,8 @@ main_df2_GT6 <- main_df2 %>%
   filter(SiteCode %in% visit_tally$SiteCode[visit_tally$AtLeast6Samples]) %>%
   group_by(SiteCode) %>%
   slice_sample(n=6, replace=F) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(DataType="Real")
 
 
 # main_df2_LT6 <- main_df2 %>%
@@ -154,37 +155,48 @@ main_df2_GT6 <- main_df2 %>%
 set.seed(1)
 main_df2_LT6 <- main_df2 %>%
   filter(SiteCode %in% visit_tally$SiteCode[!visit_tally$AtLeast6Samples]) %>%
+  mutate(DataType="Real") %>%
   #If visited 5 times, add a random visit
   bind_rows(
     main_df2 %>%
       filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==5]) %>%
       group_by(SiteCode) %>%
-      slice_sample(n=1, replace=F)
+      slice_sample(n=1, replace=F) %>%
+      mutate(DataType="Upsampled") 
   ) %>%
   #If visited 4 times, add 2 random visits
   bind_rows(
     main_df2 %>%
       filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==4]) %>%
       group_by(SiteCode) %>%
-      slice_sample(n=2, replace=F) 
+      slice_sample(n=2, replace=F) %>%
+      mutate(DataType="Upsampled") 
   )%>%
   #If visited 3 times, add all visits again
   bind_rows(
     main_df2 %>%
-      filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==3]) 
+      filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==3]) %>%
+      mutate(DataType="Upsampled") 
   ) %>%
   #If visited 2 times, add all visits twice
   bind_rows(
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2]), 
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2])
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2]) %>%
+      mutate(DataType="Upsampled") , 
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2]) %>%
+      mutate(DataType="Upsampled") 
   ) %>%
   # If visited once, add all visits 5 more times
   bind_rows(
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]),
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]), 
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]), 
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]), 
-    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]) %>%
+      mutate(DataType="Upsampled") ,
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
+      mutate(DataType="Upsampled") , 
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
+      mutate(DataType="Upsampled") , 
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
+      mutate(DataType="Upsampled") , 
+    main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
+      mutate(DataType="Upsampled") 
   ) %>%
   ungroup()
 
@@ -401,7 +413,7 @@ mod_summary$Accuracy_EvALI_training<-sapply(1:nrow(mod_summary), function(i){
                                           Class_pred50_best %in% c("E")~"E",
                                           Class_pred50_best %in% c("NMI")~"NMI",
                                           T~"Other"),
-      CORRECT = Class_pred50_best2==Class2)
+           CORRECT = Class_pred50_best2==Class2)
   sum(xdf$CORRECT)/length(xdf$CORRECT)
 })
 
@@ -500,7 +512,6 @@ mod_summary$Accuracy_EnotP_training<-sapply(1:nrow(mod_summary), function(i){
   sum(xdf$Class_pred50_best!="P")/nrow(xdf)
 })
 
-
 mod_summary$Accuracy_EnotP_testing<-sapply(1:nrow(mod_summary), function(i){
   xdf = my_predicted_classes_combined[[i]] %>%
     filter(SiteSet=="Testing") %>%
@@ -508,25 +519,25 @@ mod_summary$Accuracy_EnotP_testing<-sapply(1:nrow(mod_summary), function(i){
   sum(xdf$Class_pred50_best!="P")/nrow(xdf)
 })
 
-
+mod_summary$Accuracy_EnotP_testing[is.na(mod_summary$Accuracy_EnotP_testing)]<-0
 mod_summary_long<-mod_summary %>%
   pivot_longer(cols=c(contains("Accuracy"), contains("Precision"))) %>%
   mutate(MetricType2 = case_when(str_detect(name,"Accuracy")~"Accuracy",
-                                str_detect(name,"Precision")~"Precision",
-                                T~"Other"),
+                                 str_detect(name,"Precision")~"Precision",
+                                 T~"Other"),
          Comparison = case_when(str_detect(name,"PvIvE")~"PvIvE",
-                                 str_detect(name,"EvALI")~"EvALI",
+                                str_detect(name,"EvALI")~"EvALI",
                                 str_detect(name,"PnotE")~"PnotE",
                                 str_detect(name,"EnotP")~"EnotP",
-                                 T~"Other"),
+                                T~"Other"),
          SiteSet = case_when(str_detect(name, "training")~"Training",
                              T~"Testing"),
          Metric = paste(MetricType2, Comparison, sep="_")
-         ) %>%
+  ) %>%
   select(Stratification, Strata, IncludeGISPreds, ModName,SiteSet,
          n_training, n_testing,
          MetricType2, Comparison,Metric, name, value
-         ) 
+  ) 
 
 
 ggplot(data=mod_summary_long, aes(x=Strata, y=value))+
@@ -538,9 +549,82 @@ ggplot(data=mod_summary_long, aes(x=Strata, y=value))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Performance")+xlab("")
 
+ggplot(data=mod_summary_long %>%
+         filter(MetricType2=="Accuracy") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+       aes(x=Strata, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")
 
-which(mod_summary$Strata=="NCNE" & mod_summary$IncludeGISPreds)
-mod_summary[26,]
+ggplot(data=mod_summary_long %>%
+         filter(MetricType2=="Precision") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+       aes(x=Strata, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Precision")+xlab("")
+
+
+mod_summary_long_across_strata<-mod_summary_long %>%
+  group_by(Stratification, IncludeGISPreds, SiteSet,
+           MetricType2, Metric, Comparison, name) %>%
+  summarise(value_unweighted = mean(value),
+            lowest_value = min(value)) %>%
+  ungroup()
+
+mod_summary %>%
+  filter(is.na(Accuracy_EnotP_testing)) %>% as.data.frame()
+
+ggplot(data=mod_summary_long %>%
+         filter(MetricType2=="Accuracy") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+       aes(x=Strata, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_hline(data=mod_summary_long_across_strata %>%
+               filter(MetricType2=="Accuracy") %>%
+               mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+             aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
+  scale_linetype_manual(values=c("dotted","dashed"))+
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")
+
+
+
+ggplot(data=mod_summary_long %>%
+         filter(MetricType2=="Precision") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+       aes(x=Strata, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_hline(data=mod_summary_long_across_strata %>%
+               filter(MetricType2=="Precision") %>%
+               mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+             aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
+  scale_linetype_manual(values=c("dotted","dashed"))+
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Precision")+xlab("")
+
+mod_summary_long %>%
+  filter(Comparison=="EnotP" & Stratification=="corps_region_short" & !IncludeGISPreds & SiteSet=="Testing")
+
+
+
 my_predicted_classes_testing[[26]] %>%
   group_by(SiteCode, Class, Class_pred50_best) %>%
   filter(Class=="E") %>%
@@ -587,9 +671,9 @@ met_colors_df<-imp_plot_dat %>%
                                  MetricType =="Geomorphic"~"#d95f02",
                                  MetricType =="GIS"~"#7570b3",
                                  
-                                 ))
+  ))
 variable_importance_plot<-ggplot(imp_plot_dat, 
-       aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+                                 aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
   geom_tile()+
   scale_fill_viridis_c(trans="sqrt")+
   # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
@@ -598,3 +682,349 @@ variable_importance_plot<-ggplot(imp_plot_dat,
   xlab("")+ylab("")
 
 ggsave(variable_importance_plot, filename="NotForGit/variable_importance_plot.png", height=15, width=9)
+
+
+#MOD SUMMARY SCORING
+mod_summary_long_across_strata %>%
+  mutate(Score = case_when(value_unweighted >=.95~3,
+                           value_unweighted >=.90~2,
+                           value_unweighted >=.80~1,
+                           T~0)) %>%
+  group_by(Stratification, Strata, IncludeGISPreds, ModName) %>%
+  summarise(SumScore =sum(Score)) %>%
+  ungroup() %>%
+  ggplot(aes(x=Strata, y=SumScore))+
+  geom_point(aes(color=IncludeGISPreds))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  facet_wrap(~Stratification, scales = "free_x", nrow=1)+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))
+
+
+#####################
+#Subpop-level accuracy assessments
+
+#What are my subpops?
+#EPA regions?
+epa_sf<-st_read("NotForGit/Shapefiles/Environmental_Protection_Agency_(EPA)_Regions/Environmental_Protection_Agency_(EPA)_Regions.shp")
+#USACE divisions?
+usace_sf<-st_read("NotForGit/Shapefiles/USACE_Civil_Works_Divisions/USACE_Divisions.shp")
+xwalk_sf<-xwalk_df %>%
+  st_as_sf(coords=c("long","lat"),
+           crs=4326) %>%
+  st_transform(crs=st_crs(epa_sf)) %>%
+  st_join(epa_sf %>%
+            transmute(epa_reg = gsub("Region ","EPA_", EPAREGION))) %>%
+  st_transform(crs=st_crs(usace_sf)) %>%
+  st_join(usace_sf %>%
+            transmute(usace_reg = DIV_SYM)) 
+
+ggplot()+
+  geom_sf(data=usace_sf, aes(fill=DIV_SYM))+
+  geom_sf(data=xwalk_sf)+
+  scale_fill_viridis_d(guide="none", option="cividis", begin=.1, end=.9)+
+  coord_sf(xlim=c(-125, -66.5),
+           ylim=c(25, 49.5))+
+  theme_bw()+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+
+xwalk_df2<-xwalk_sf %>%
+  as_tibble() %>%
+  select(-geometry) %>%
+  mutate(epa_reg = case_when(epa_reg %in% c("EPA_1","EPA_2")~"EPA_12",T~epa_reg))
+
+xwalk_df2 %>% group_by(usace_reg) %>% tally()
+xwalk_df2 %>% group_by(epa_reg) %>% tally()
+
+mod_summary_assessment_strata <-  mod_summary %>%
+  select(Stratification, Strata, ModName) %>%
+  unique() %>%
+  crossing(AssessmentStratum=xwalk_sf$usace_reg %>% unique())
+
+mod_summary_assessment_strata$n_sites <- sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  # gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i))
+  nrow(xdf)
+})
+
+mod_summary_assessment_strata<- mod_summary_assessment_strata %>%
+  crossing(IncludeGISPreds=c(T,F)) %>%
+  filter(n_sites>0)
+
+
+
+mod_summary_assessment_strata$n_P_training<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Training") %>%
+    filter(Class=="P") 
+  nrow(xdf)
+})
+
+mod_summary_assessment_strata$n_P_testing<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Testing") %>%
+    filter(Class=="P") 
+  nrow(xdf)
+})
+
+mod_summary_assessment_strata$n_I_training<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Training") %>%
+    filter(Class=="I") 
+  nrow(xdf)
+})
+
+mod_summary_assessment_strata$n_I_testing<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Testing") %>%
+    filter(Class=="I") 
+  nrow(xdf)
+})
+
+mod_summary_assessment_strata$n_E_training<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Training") %>%
+    filter(Class=="E") 
+  nrow(xdf)
+})
+mod_summary_assessment_strata$n_E_testing<-  sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Testing") %>%
+    filter(Class=="E") 
+  nrow(xdf)
+})
+
+
+mod_summary_assessment_strata$Correct_PvIvE_training<-sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Training") %>%
+    mutate(CORRECT = Class_pred50_best==Class)
+  sum(xdf$CORRECT)
+  # ifelse(is.na(y),0,y)
+})
+
+
+mod_summary_assessment_strata$Correct_PvIvE_testing<-sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Testing") %>%
+    mutate(CORRECT = Class_pred50_best==Class)
+  sum(xdf$CORRECT)
+})
+
+mod_summary_assessment_strata$Correct_EvALI_training<-sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Training") %>%
+    mutate(Class2 = case_when(Class %in% c("I","P")~"ALI", T~"E"),
+           Class_pred50_best2 = case_when(Class_pred50_best %in% c("I","P","ALI")~"ALI",
+                                          Class_pred50_best %in% c("E")~"E",
+                                          Class_pred50_best %in% c("NMI")~"NMI",
+                                          T~"Other"),
+           CORRECT = Class_pred50_best2==Class2)
+  sum(xdf$CORRECT)
+})
+
+
+mod_summary_assessment_strata$Correct_EvALI_testing<-sapply(1:nrow(mod_summary_assessment_strata), function(i){
+  stratf.i=mod_summary_assessment_strata$Stratification[i]
+  strat.i= mod_summary_assessment_strata$Strata[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  
+  xdf = my_predicted_classes_combined[[j]] %>%
+    inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
+                 filter(usace_reg==ass_subpop.i)) %>%
+    filter(SiteSet=="Testing") %>%
+    mutate(Class2 = case_when(Class %in% c("I","P")~"ALI", T~"E"),
+           Class_pred50_best2 = case_when(Class_pred50_best %in% c("I","P","ALI")~"ALI",
+                                          Class_pred50_best %in% c("E")~"E",
+                                          Class_pred50_best %in% c("NMI")~"NMI",
+                                          T~"Other"),
+           CORRECT = Class_pred50_best2==Class2)
+  sum(xdf$CORRECT)
+})
+
+
+
+
+mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
+  select(-n_sites) %>%
+  pivot_longer(cols=c(starts_with("n"), starts_with("Correct"))) %>%
+  group_by(Stratification, IncludeGISPreds, AssessmentStratum, name) %>%
+  summarise(value=sum(value)) %>%
+  pivot_wider(names_from="name", values_from = "value", values_fill = 0) %>%
+  ungroup() %>%
+  mutate(
+    n_training = (n_P_training + n_I_training + n_E_training ),
+    n_testing = (n_P_testing + n_I_testing + n_E_testing ),
+    Accuracy_PvIvE_training = Correct_PvIvE_training/n_training,
+    Accuracy_PvIvE_testing = Correct_PvIvE_testing/n_testing,
+    Accuracy_EvALI_training = Correct_EvALI_training/n_training,
+    Accuracy_EvALI_testing = Correct_EvALI_testing/n_testing
+  ) %>%
+  select(-starts_with("Correct"), -starts_with("n_")) %>%
+  pivot_longer(cols=starts_with("Accuracy")) %>%
+  mutate(MetricType2 = case_when(str_detect(name,"Accuracy")~"Accuracy",
+                                 str_detect(name,"Precision")~"Precision",
+                                 T~"Other"),
+         Comparison = case_when(str_detect(name,"PvIvE")~"PvIvE",
+                                str_detect(name,"EvALI")~"EvALI",
+                                str_detect(name,"PnotE")~"PnotE",
+                                str_detect(name,"EnotP")~"EnotP",
+                                T~"Other"),
+         SiteSet = case_when(str_detect(name, "training")~"Training",
+                             T~"Testing"),
+         Metric = paste(MetricType2, Comparison, sep="_"),
+         value=case_when(is.na(value)~0,T~value)  ) 
+
+# mod_summary_assessment_strata_long_sum<-mod_summary_assessment_strata_long %>%
+#   group_by(Stratification, IncludeGISPreds,  AssessmentStratum,
+#            name, MetricType2, Metric, Comparison, SiteSet) %>%
+#   summarise(value_unweighted = mean(value),
+#             value_weighted = weighted.mean(value=n_sites),
+#             value_lowest=min(value)) %>%
+#   ungroup()
+
+mod_summary_assessment_strata_long %>%
+  filter(Stratification=="beta_region" & 
+           AssessmentStratum=="AW" & IncludeGISPreds & 
+           SiteSet=="Training")
+
+ggplot(data=mod_summary_assessment_strata_long %>%
+         filter(MetricType2=="Accuracy") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+       aes(x=AssessmentStratum , y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  # geom_hline(data=mod_summary_long_across_strata %>%
+  #              filter(MetricType2=="Accuracy") %>%
+  #              mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+  #            aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
+  scale_linetype_manual(values=c("dotted","dashed"))+
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")
+
+
+mod_summary_long_across_strata %>%
+  left_join(mod_summary_assessment_strata_long %>%
+              select(Stratification, IncludeGISPreds, WorstSubpop=AssessmentStratum, name,
+                     WorstPerformance=value) %>%
+              group_by(Stratification, IncludeGISPreds, WorstSubpop, name) %>%
+              slice_min(WorstPerformance, n=1)) %>%
+  mutate(Approach=case_when(!IncludeGISPreds~Stratification,
+                            T~paste(Stratification,"GIS"))) %>%
+  # filter(!IncludeGISPreds) %>%
+  ggplot( )+
+  geom_tile(aes(x=Metric, y=Approach, fill=value_unweighted), color="white")+
+  scale_fill_viridis_c(name="Performance")+
+  facet_wrap(~SiteSet)+
+  xlab("Stratification approach")+ylab("")+
+  coord_flip()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
+
+mod_summary_long_across_strata %>%
+  mutate(Approach=case_when(IncludeGISPreds~Stratification,
+                            T~paste(Stratification,"GIS"))) %>%
+  select(-MetricType2, -name, -Comparison, -lowest_value) %>%
+  pivot_wider(names_from=Metric, values_from = value_unweighted) 
+
+
+ggplot(data=mod_summary_assessment_strata_long %>%
+         mutate(Approach=case_when(!IncludeGISPreds~Stratification,
+                                   T~paste(Stratification,"GIS"))) %>%
+         filter(MetricType2=="Accuracy") %>%
+         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+       aes(y=AssessmentStratum , x=Approach))+
+  geom_tile(aes(fill=value))+
+  scale_fill_viridis_c(name="Performance")+
+  facet_grid(Comparison ~SiteSet)+
+  xlab("Assessment Subpop")+ylab("")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))

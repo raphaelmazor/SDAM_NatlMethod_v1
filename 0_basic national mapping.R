@@ -159,6 +159,18 @@ ggplot()+
         panel.grid = element_blank(),
         panel.border = element_blank())
 
+ggplot()+
+  geom_sf(data=mlra_sf, aes(fill=Region))+
+  geom_sf(data=xwalk_sf %>% filter(Class=="E"), size=.5)+
+  geom_sf(data=xwalk_sf %>% filter(Class=="E") %>% filter(corps_region_short %in% c("NCNE","AGCP","MW")),
+          size=3)+
+  scale_fill_viridis_d(guide="none", option="cividis", begin=.1, end=.9)+
+  theme_bw()+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
 
 
 xwalk_sf2<-xwalk_sf %>%
