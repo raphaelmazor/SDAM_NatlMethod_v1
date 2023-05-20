@@ -3,14 +3,14 @@ library(tidyverse)
 #Import xwalk<-
 xwalk_df<-#read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
   read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
-  mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
-                                    T~Region_detail) %>%
-           factor(levels=c("AW","WM","GP","NE","SE","PNW", "CB")),
-         all_region="USA",
-         conus_region=case_when(Region=="Caribbean"~"Non-CONUS",T~"CONUS"),
+  mutate(
+    # Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
+    #                                 T~Region_detail) %>%
+    #        factor(levels=c("AW","WM","GP","NE","SE","PNW", "CB")),
+    #      all_region="USA",
+    #      # conus_region=case_when(Region=="Caribbean"~"Non-CONUS",T~"CONUS"),
          Class=case_when(!Class %in% c("P","I","E","U")~"U",T~Class),
-         Class=factor(Class, levels=c("P","I","E","U"))) %>%
-  filter(Region!="PNW")
+         Class=factor(Class, levels=c("P","I","E","U")))
 
 EastDBs<-c("NESE Baseline Revisits v2", "NESE Baseline v1", "NESE Validation v1")
 WestDBs<-c("WMBR_1_1","WEx_SDAM_0","WMBR_2","WMV_1","FD003","FD004")
@@ -91,6 +91,9 @@ main_df<-   main_raw %>%
     ReachLength_actual= reachlength,
     Riparian_yn= riparian, 
     ErosionDeposition_yn=erosion,
+    Erosion_Deposition_Score=case_when(ErosionDeposition_yn=="yes"~1,
+                                       ErosionDeposition_yn=="no"~0,
+                                       T~NA_real_),
     FloodplainConnectivity_yn=floodplain,
     #GEOMORPHIC INDICATORS
     Bankwidth_0 = bankfullwidth0, #drop later
@@ -99,7 +102,7 @@ main_df<-   main_raw %>%
     # BankWidthMean = (Bankwidth_0+Bankwidth_15+Bankwidth_30)/(!is.na(Bankwidth_0)+!is.na(Bankwidth_15)+!is.na(Bankwidth_30)),
     #main_raw %>% select(Bankwidth_0, Bankwidth_15, Bankwidth_30) %>% rowMeans(na.rm=T), #nearly complete
     Slope=valleyslope,  #nearly complete
-    
+    ChannelSlope=Slope,
     SedimentOnPlantsDebris_score= hi_debrisscore, 
     SedimentOnPlantsDebris_notes= debrisnotes,
     Continuity_score = gi_contbbscore, # NESE - Continuity  of channel and bank score
@@ -162,7 +165,7 @@ main_df<-   main_raw %>%
     MaxPoolDepth = max_pool_depth,# NESE only
     SeepsSprings_yn=hi_seepsspring,# All regions
     SeepsSprings_inchannel = inchannel,# NESE only
-    springs_score_NM = case_when(SeepsSprings_yn=="present"~3,T~0),
+    springs_score_NM = case_when(SeepsSprings_yn=="present"~1.5,T~0),
     baseflowscore,# NESE only
     baseflow_notes,#NESE
     WaterInChannel_score = case_when(is.na(hi_channelscore) & !is.na(baseflowscore)~2*baseflowscore,
@@ -203,6 +206,8 @@ main_df<-   main_raw %>%
     
     
     UplandRootedPlants_score= uplandrootedplants_score, # Both uplandrootedplants score and fiberousroots score ARE recorded for the NESE region (KSM)
+    UplandRootedPlants_score2= case_when(UplandRootedPlants_score==3~0,
+                                         UplandRootedPlants_score < 3~1),
     UplandRootedPlants_notes= uplandrootedplants_notes, 
     FibrousRootedPlants_score= fibrous_rootscore, # Actually, fibrous roots for NESE in ununified database
     FibrousRootedPlants_notes= fibrous_rootnotes, # Actually, fibrous roots for NESE in ununified database
@@ -228,7 +233,9 @@ main_df<-   main_raw %>%
                         T~0), #Both East and Other regions
     Fish_PA_nomosq = (Fish_PA*(Mosquitofish=="no")), #Both East and Other regions
     BMI_score= abundancescorebenthic,# Not recorded for NESE
-    Algae_score= abundancealgae, 
+    BMI_presence = case_when(BMI_score>0~1,T~0),
+    Algae_score= case_when(abundancealgae=="Not recorded"~NA_real_,
+                           T~as.numeric(abundancealgae)), 
     
     
     
@@ -240,6 +247,9 @@ main_df<-   main_raw %>%
                                   is.na(observedfungi)~0,
                                   is.na(ironox_bfscore)~0,
                                   T~ironox_bfscore), 
+    ironox_bfscore_PNW = case_when(ironox_bfscore_NM==3~1.5,
+                                   ironox_bfscore_NM==0~0,
+                                   T~NA_real_),
     ironox_bfnotes,#NESE
     Snakes_yn= observedsnakes, # Not recorded for NESE
     # Snakes_abundance= obsnakesabundance, # Not recorded for NESE
@@ -251,7 +261,8 @@ main_df<-   main_raw %>%
     # Amphibians_abundance= obampiabundance, # Not recorded for NESE #Not meaningful!
     #FrogVocalizations_yn= observedvocalfrogs, # Not recorded for NESE
     BiologicalIndicators_notes= observedabundancenote, # Not recorded for NESE
-    
+    AlgaeAbundance_NM = case_when(abundancealgae =="Not recorded"~NA_real_,
+                                  T~as.numeric(abundancealgae)),
     AlgalCover_Live=case_when(streambedlive %in% c("notdetected")~0,
                               streambedlive %in% c("<2%")~1,
                               streambedlive %in% c("2 to 10%", "2-10%")~2,
@@ -263,13 +274,13 @@ main_df<-   main_raw %>%
                               streambeddead %in% c("10 to 40%", "10-40%")~3,
                               streambeddead %in% c(">40%")~4),
     AlgalCover_LiveOrDead = case_when(AlgalCover_Live>=AlgalCover_Dead~AlgalCover_Live, T~AlgalCover_Dead),
-      # case_when(AlgalCover_Live==">40%" | AlgalCover_Dead==">40%"~">40%",
-      #           AlgalCover_Live=="10 to 40%" | AlgalCover_Dead=="10 to 40%"~"10 to 40%",
-      #           AlgalCover_Live=="2 to 10%" | AlgalCover_Dead=="2 to 10%"~"2 to 10%",
-      #           AlgalCover_Live=="<2%" | AlgalCover_Dead=="<2%"~"<2%",
-      #           AlgalCover_Live=="Not detected" & AlgalCover_Dead=="Not detected"~"Not detected",
-      #           T~"Other"
-      # ),
+    # case_when(AlgalCover_Live==">40%" | AlgalCover_Dead==">40%"~">40%",
+    #           AlgalCover_Live=="10 to 40%" | AlgalCover_Dead=="10 to 40%"~"10 to 40%",
+    #           AlgalCover_Live=="2 to 10%" | AlgalCover_Dead=="2 to 10%"~"2 to 10%",
+    #           AlgalCover_Live=="<2%" | AlgalCover_Dead=="<2%"~"<2%",
+    #           AlgalCover_Live=="Not detected" & AlgalCover_Dead=="Not detected"~"Not detected",
+    #           T~"Other"
+    # ),
     AlgalCover_Upstream=streambeddeadmats,
     AlgalCover_Live_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Live),
     AlgalCover_Dead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Dead),
@@ -293,15 +304,26 @@ main_df<-   main_raw %>%
       case_when(bryophytemosses=="notdetected"~0,
                 bryophytemosses=="<2%"~1,
                 bryophytemosses=="2-10%"~2,
-                bryophytemosses==">10%"~3),
+                bryophytemosses==">10%"~3,
+                is.na(bryophytemosses)~0),
     Liverwort_cover=#bryophyteliverworts,
       case_when(bryophyteliverworts=="notdetected"~0,
                 bryophyteliverworts=="<2%"~1,
                 bryophyteliverworts=="2-10%"~2,
-                bryophyteliverworts==">10%"~3),
+                bryophyteliverworts==">10%"~3,
+                is.na(bryophyteliverworts)~0),
     Bryophyte_notes=bryophtyenotes,
+    AlgaeAbundanceMossCover_Score=case_when(is.na(Algae_score)~NA_real_,
+                                            is.na(Moss_cover)~NA_real_,
+                                            Algae_score==0 & Moss_cover ==0 ~ 0,
+                                            Algae_score>0  & Algae_score<=2 & Moss_cover <=2 ~ 0.5,
+                                            Algae_score==0 & Moss_cover>0 & Moss_cover <=2 ~ 0.5,
+                                            Algae_score==3~1,
+                                            T~1
+    ),
     
     DifferencesInVegetation_score=vegetationdifferencescore, 
+    RiparianCorridor_score=DifferencesInVegetation_score,
     DifferencesInVegetation_notes=vegenotes, 
     NWPL_checklist= regionalindicators, 
     ai_fieldid, #NESE
@@ -312,10 +334,11 @@ main_df<-   main_raw %>%
   mutate(fp_entrenchmentratio_mean=mean(c(fp_entrenchmentratio1,fp_entrenchmentratio2,fp_entrenchmentratio3), na.rm=T),
          fp_entrenchmentratio_mean=case_when(fp_entrenchmentratio_mean>2.5~2.5, T~fp_entrenchmentratio_mean),
          ChannelDimensions_score_NC=case_when(fp_entrenchmentratio_mean<1.2~0,
-                                           fp_entrenchmentratio_mean<2.5~1.5,
-                                           fp_entrenchmentratio_mean>=2.5~3,
-                                           T~NA_real_),
+                                              fp_entrenchmentratio_mean<2.5~1.5,
+                                              fp_entrenchmentratio_mean>=2.5~3,
+                                              T~NA_real_),
          BankWidthMean = mean(c(Bankwidth_0, Bankwidth_15, Bankwidth_30), na.rm = T),
+         
          PctShading=mean(c(dens_UU/.17, dens_UL/.17, dens_UR/.17, dens_UD/.17,
                            dens_MU/.17, dens_ML/.17, dens_MR/.17, dens_MD/.17,
                            dens_DU/.17, dens_DL/.17, dens_DR/.17, dens_DD/.17), na.rm = T)) %>%
@@ -325,8 +348,8 @@ main_df<-   main_raw %>%
          -fp_entrenchmentratio1, -fp_entrenchmentratio2, -fp_entrenchmentratio3, -fp_entrenchmentratio_mean,
          -starts_with("dens_")) %>%
   mutate(ChannelDimensions_score= case_when(!is.na(ChannelDimensions_score_NC)~ChannelDimensions_score_NC,
-                                           !is.na(ChannelDimensions_score_NM)~ChannelDimensions_score_NM,
-                                           T~NA_real_))
+                                            !is.na(ChannelDimensions_score_NM)~ChannelDimensions_score_NM,
+                                            T~NA_real_))
 
 main_df %>% select(contains("dimens"))
 ####Soil moisture
@@ -420,17 +443,17 @@ setdiff(multiyear_tadpoles , frog_species)
 amphib_mets<-amphib_df %>%
   group_by(ParentGlobalID) %>%
   summarise(Amphib_richness = Amphib_Species %>% unique() %>% length(),
-            Amphib_abundance = sum(Amphib_Abundance),
+            Amphib_abundance = sum(Amphib_Abundance, na.rm=T),
             Frog_richness = Amphib_Species[Frog] %>% unique() %>% length(),
-            Frog_abundance = sum(Amphib_Abundance[Frog]),
+            Frog_abundance = sum(Amphib_Abundance[Frog], na.rm=T),
             Salamander_richness = Amphib_Species[Salamander] %>% unique() %>% length(),
-            Salamander_abundance = sum(Amphib_Abundance[Salamander]),
+            Salamander_abundance = sum(Amphib_Abundance[Salamander], na.rm=T),
             Amphib_Juvenile_richness = Amphib_Species[Amphib_LifeStage!="A"] %>% unique() %>% length(),
-            Amphib_Juvenile_abundance = sum(Amphib_Abundance[Amphib_LifeStage!="A"]),
-            Salamander_Juvenile_abundance = sum(Amphib_Abundance[Salamander & Amphib_LifeStage %in% c("L","J")]),
-            Multiyear_tadpole_abundance = sum(Amphib_Abundance[Multiyear_Tadpole & Amphib_LifeStage=="L"])
+            Amphib_Juvenile_abundance = sum(Amphib_Abundance[Amphib_LifeStage!="A"], na.rm=T),
+            Salamander_Juvenile_abundance = sum(Amphib_Abundance[Salamander & Amphib_LifeStage %in% c("L","J")], na.rm=T),
+            Multiyear_tadpole_abundance = sum(Amphib_Abundance[Multiyear_Tadpole & Amphib_LifeStage=="L"], na.rm=T)
   )
-
+# amphib_mets %>% skim_without_charts()
 main_df<-main_df %>%
   left_join(amphib_mets %>% transmute(ParentGlobalID, 
                                       Amphib_count=Amphib_abundance)) %>%
@@ -441,9 +464,12 @@ main_df<-main_df %>%
                                    is.na(Amphib_count) & is.na(Amphibians_yn)~"notdetected",
                                    T~"OTHER")) %>%
   #Get rid of interim metrics
-  select(-Amphib_count)
+  select(-Amphib_count) %>%
+  mutate(Amphibian_presence = case_when(Amphibians_yn=="present"~1,
+                                         Amphibians_yn=="notdectected"~0,
+                                         T~0))
 
-
+# main_df$Amphibians_presence %>% skim()
 #### HYDROVEG ####
 hydroveg_df<- 
   read_csv("https://sdamchecker.sccwrp.org/checker/download/hydroveg-all") %>%
@@ -506,8 +532,9 @@ veg_metrics<-hydroveg_df %>%
   ungroup()
 
 main_df<-main_df %>%
-  left_join(veg_metrics %>% select(ParentGlobalID, hydrophytes_present, hydrophytes_present_noflag)) %>%
+  left_join(veg_metrics %>% select(ParentGlobalID, hydrophytes_present, hydrophytes_present_noflag, hydrophytes_present_any)) %>%
   mutate(hydrophytes_present = case_when(is.na(hydrophytes_present)~0,T~hydrophytes_present),
+         hydrophytes_present_any = case_when(is.na(hydrophytes_present_any)~0,T~hydrophytes_present_any),
          hydrophytes_present_noflag = case_when(is.na(hydrophytes_present_noflag)~0,T~hydrophytes_present_noflag))
 
 
@@ -518,25 +545,92 @@ ai_mets<-setdiff(names(ai_metrics), "ParentGlobalID")
 
 ai_metrics2<-main_df %>%
   select(ParentGlobalID) %>%
-  left_join(ai_metrics) 
+  left_join(ai_metrics) %>%
+  mutate(
+    Ephemeroptera_SumOfIndividuals = case_when(Ephemeroptera_abundance==0~0,
+                                               Ephemeroptera_abundance<=5~1,
+                                               Ephemeroptera_abundance>5~2,
+                                               T~NA_real_),
+    Plecoptera_SumOfIndividuals = case_when(Plecoptera_abundance==0~0,
+                                            Plecoptera_abundance<=5~1,
+                                            Plecoptera_abundance>5~2,
+                                            T~NA_real_),
+    Trichoptera_SumOfIndividuals = case_when(Trichoptera_abundance==0~0,
+                                             Trichoptera_abundance<=5~1,
+                                             Trichoptera_abundance>5~2,
+                                             T~NA_real_),
+    Hemiptera_SumOfIndividuals = case_when(Hemiptera_abundance==0~0,
+                                           Hemiptera_abundance<=5~1,
+                                           Hemiptera_abundance>5~2,
+                                           T~NA_real_),
+    Coleoptera_SumOfIndividuals = case_when(Coleoptera_abundance==0~0,
+                                            Coleoptera_abundance<=5~1,
+                                            Coleoptera_abundance>5~2,
+                                            T~NA_real_),
+    Odonata_SumOfIndividuals = case_when(Odonata_abundance==0~0,
+                                         Odonata_abundance<=5~1,
+                                         Odonata_abundance>5~2,
+                                            T~NA_real_),
+    Decapoda_SumOfIndividuals = case_when(Decapoda_abundance==0~0,
+                                          Decapoda_abundance<=5~1,
+                                          Decapoda_abundance>5~2,
+                                          T~NA_real_),
+    Basommatophora_SumOfIndividuals = case_when(Basommatophora_abundance==0~0,
+                                                Basommatophora_abundance<=5~1,
+                                                Basommatophora_abundance>5~2,
+                                          T~NA_real_),
+    OtherMacro_SumOfIndividuals = case_when(OtherMacro_abundance==0~0,
+                                            OtherMacro_abundance<=5~1,
+                                            OtherMacro_abundance>5~2,
+                                                T~NA_real_),
+    EPT_SumOfIndividuals = case_when(EPT_abundance==0~0,
+                                     EPT_abundance<=5~1,
+                                     EPT_abundance>5~2,
+                                            T~NA_real_),
+    OCH_SumOfIndividuals = case_when(OCH_abundance==0~0,
+                                     OCH_abundance<=5~1,
+                                     OCH_abundance>5~2,
+                                     T~NA_real_),
+    TotalAbundance_SumOfIndividuals = case_when(TotalAbundance==0~0,
+                                                TotalAbundance<=5~1,
+                                                TotalAbundance>5~2,
+                                     T~NA_real_),
+    MacroGroupsPresent = 
+      (Ephemeroptera_SumOfIndividuals>0)+
+      (Plecoptera_SumOfIndividuals>0)+
+      (Trichoptera_SumOfIndividuals>0)+
+      (Coleoptera_SumOfIndividuals>0)+
+      (Odonata_SumOfIndividuals>0)+
+      (Hemiptera_SumOfIndividuals>0)+
+      (Basommatophora_SumOfIndividuals>0)+
+      (Decapoda_SumOfIndividuals>0)+
+      (OtherMacro_SumOfIndividuals>0),
+    PerennialPNWMacroPresent = case_when(perennial_PNW_abundance>0~1,T~0),
+      )
+
 ai_metrics2[is.na(ai_metrics2)]<-0
+ai_metrics2 %>% select(Ephemeroptera_abundance,Plecoptera_abundance, Trichoptera_abundance, MacroGroupsPresent)
+
+ai_metrics2 %>% select(contains ("baso")) %>% skim()
 main_df<-main_df %>%
-  left_join(ai_metrics2)
+  left_join(ai_metrics2) %>%
+  mutate(BMI_presence = case_when(TotalAbundance>0~1,
+                                  T~BMI_presence))
 
-#######GEOSPATIAL METRICS
-#Calculated in 0.5_gis_metric_calculations.R
-gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
-setdiff(main_df$SiteCode, gis_metrics_df$SiteCode)
-main_df<-
-  main_df %>%
-  inner_join(gis_metrics_df)
+# #######GEOSPATIAL METRICS
+# #Calculated in 0.5_gis_metric_calculations.R
+# gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+# setdiff(main_df$SiteCode, gis_metrics_df$SiteCode)
+# main_df<-
+#   main_df %>%
+#   inner_join(gis_metrics_df)
 
-drn_df<-read_csv("Data/drainage_areas.csv")
-setdiff(xwalk_df$sitecode, drn_df$SITECODE)
-xwalk_df%>%
-  filter(!sitecode %in% drn_df$SITECODE) %>%
-  select(sitecode, lat, long) %>%
-  clipr::write_clip()
+# drn_df<-read_csv("Data/drainage_areas.csv")
+# setdiff(xwalk_df$sitecode, drn_df$SITECODE)
+# xwalk_df%>%
+#   filter(!sitecode %in% drn_df$SITECODE) %>%
+#   select(sitecode, lat, long) %>%
+#   clipr::write_clip()
 
 #################
 
@@ -703,7 +797,7 @@ rf_sum_importance<-lapply(1:nrow(rf_sum), function(i){
            Region_id=reg.i,
            Metric=row.names(xmat)) %>%
     rename(P_imp=P, I_imp=I, E_imp=E)
-
+  
 }) %>% bind_rows() %>%
   mutate(MetricType=case_when(Metric %in% GeomorphPreds~"Geomorphic",
                               Metric %in% GISPreds~"GIS",
@@ -750,7 +844,7 @@ ggplot(data=rf_sum_plotdat, aes(x=Region_id, y=value))+
                summarise(WeightedMean = weighted.mean(value, Weight)),
              aes(yintercept=WeightedMean),
              linetype="dashed"
-             )+
+  )+
   facet_wrap(~Regionalization, scales="free_x", nrow=1)+
   scale_color_brewer(palette="Set1", name="Error rate")+
   ylab("Error rate")+

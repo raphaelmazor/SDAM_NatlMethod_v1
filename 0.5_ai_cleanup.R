@@ -471,7 +471,7 @@ ai_combined <- ai_df %>%
       AI_Taxon2 %in% c("Libellulidae" )~"Libellulidae",
       AI_Taxon2 %in% c("Astacoidea" )~"ASTACOIDEA",
       AI_Taxon2 %in% c("Viviparidae" )~"Viviparidae",
-      AI_Taxon2 %in% c("Acroloxidae" )~"Ancylidae", #Not in SAFIT. Mis-identification? 2 observations in iNat
+      AI_Taxon2 %in% c("Acroloxidae" )~"Acroloxidae", #Not in SAFIT. Mis-identification? 2 observations in iNat
       AI_Taxon2 %in% c("Ptilodactylidae" )~"Ptilodactylidae",
       AI_Taxon2 %in% c("Cyphoderinae" )~"COLLEMBOLA",#Not in SAFIT, EXCLUDE?
       AI_Taxon2 %in% c("Empididae" )~"Empididae",
@@ -532,17 +532,17 @@ ai_combined <- ai_df %>%
                        "Perlidae", "Perlodidae", "PLECOPTERA","Pteronarcyidae", "Taeniopterygidae")~"Plecoptera",
       AI_Family %in% c("Apataniidae", "Brachycentridae", "Calamoceratidae", "Glossosomatidae", "Helicopsychidae", 
                        "Hydropsychidae", "Hydroptilidae","Lepidostomatidae","Leptoceridae", "Limnephilidae", 
-                       "Molannidae","Rossianidae",
+                       "Molannidae","Rossianidae","Beraeidae","Ecnomidae",
                        "Odontoceridae",  "Philopotamidae", "Phryganeidae","Polycentropodidae","Hydrobiosidae","Goeridae",
                        "Rhyacophilidae","Sericostomatidae", "TRICHOPTERA","Uenoidae","Psychomyiidae")~"Trichoptera",
       AI_Family %in% c("Aeshnidae", "Calopterygidae", "Coenagrionidae", "Cordulegastridae","Corduliidae", 
-                       "Gomphidae", "Lestidae", "Libellulidae","Macromiidae", "ODONATA")~"Odonata",
+                       "Gomphidae", "Lestidae", "Libellulidae","Macromiidae", "ODONATA","Petaluridae")~"Odonata",
       AI_Family %in% c("Belostomatidae", "Corixidae", "Gerridae", "HEMIPTERA", "Naucoridae", "Saldidae","Gelastocoridae",
-                       "Hebridae","Macroveliidae",
+                       "Hebridae","Macroveliidae","Mesoveliidae",
                        "Nepidae", "Notonectidae", "Pleidae", "Veliidae")~"Hemiptera",
       AI_Family %in% c("COLEOPTERA", "Dryopidae", "Dytiscidae", "Elmidae","Gyrinidae", "Haliplidae",
                        "Lutrochidae","Hydraenidae","Hydraenidae","Helophoridae","Eulichadidae","Georissidae",
-                       "Staphylinidae","Amphizoidae","Carabidae",
+                       "Staphylinidae","Amphizoidae","Carabidae","Hydroscaphidae",
                        "Hydrochidae", "Hydrophilidae", "Psephenidae","Ptilodactylidae","Scirtidae")~"Coleoptera",
       AI_Family %in% c("Athericidae", "Blephariceridae", "Ceratopogonidae", "Chaoboridae", 
                        "Chironomidae", "Sciomyzidae","Syrphidae","Tanyderidae",
@@ -550,13 +550,13 @@ ai_combined <- ai_df %>%
                        "DIPTERA", "Dixidae", "Dolichopodidae","Empididae","Ephydridae","Limoniidae",
                        "Muscidae","Pediciidae","Psychodidae","Ptychopteridae", "Simuliidae", 
                        "Stratiomyidae", "Tabanidae", "Tipulidae")~"Diptera",
-      AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae","Lithoglyphidae", "Physidae", 
+      AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae","Lithoglyphidae", "Physidae", "Acroloxidae",
                        "Planorbidae", "Bithyniidae","Pomatiopsidae",
                        "Thiaridae","Lymnaeidae","Pleuroceridae","Valvatidae","Viviparidae")~"GASTROPODA" ,#Most are basomatomorpha
       AI_Family %in% c("BIVALVE", "Corbiculidae", "Dreissenidae", "Margaritiferidae", "Sphaeriidae",
                        "Unionidae")~"BIVALVIA",
-      AI_Family %in% c("Amphipoda", "Asellidae", "Cambaridae", "Cladocera","COPEPODA","OSTRACODA", "CRUSTACEA", "Mysidae",
-                       "DECAPODA","Isopoda", "Mysidacea", "Palaemonidae", "Parastacidae", "Astacidae","Astacidae")~"CRUSTACEA",
+      AI_Family %in% c("Amphipoda", "Asellidae", "Cambaridae", "Cladocera","COPEPODA","OSTRACODA", "CRUSTACEA","ASTACOIDEA","Daphniidae",
+                       "DECAPODA","Isopoda", "Mysidacea", "Palaemonidae", "Parastacidae", "Astacidae","Mysidae","Oniscidae")~"CRUSTACEA",
       AI_Family %in% c("Annelida")~"Annelida",
       AI_Family %in% c("Acariformes","Arachnida")~"Acariformes",
       AI_Family %in% c("Platyheminthes","Planariidae","Turbellaria")~"Platyheminthes",
@@ -565,6 +565,7 @@ ai_combined <- ai_df %>%
       AI_Family %in% c("Nemertea")~"Nemertea",
       AI_Family %in% c("Corydalidae","Sialidae","MEGALOPTERA")~"Megaloptera",
       AI_Family %in% c("LEPIDOPTERA","Pyralidae","Crambidae")~"Lepidoptera",
+      AI_Family %in% c("NEUROPTERA")~"Neuroptera",
       T~"OtherOrder_OrderNotKnown"
       
     ),
@@ -599,6 +600,7 @@ ai_combined <- ai_df %>%
     #                             "Muscidae","Pediciidae","Psychodidae","Ptychopteridae", "Simuliidae", 
     #                             "Stratiomyidae", "Tabanidae", "Tipulidae"),
     AI_Gastropod = AI_Order=="GASTROPODA",
+    AI_Basommatophora = AI_Family %in% c("Acroloxidae","Ancylidae","Lymnaeidae","Physidae","Planorbidae"), #Not really a recognized group anymore
     # AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae", "Physidae", "Planorbidae", 
     # "Thiaridae","Lymnaeidae","Pleuroceridae","Valvatidae","Viviparidae"),# ADDED BY KSM DEC 22
     AI_Bivalve = AI_Order=="BIVALVIA",
@@ -611,6 +613,7 @@ ai_combined <- ai_df %>%
     AI_Crayfish = AI_Family %in% c("Cambaridae","DECAPODA", "Parastacidae", "Astacidae"),
     AI_Crustacean = AI_Family %in% c("Amphipoda", "Asellidae", "Cambaridae", "Cladocera","COPEPODA", "CRUSTACEA", 
                                      "DECAPODA","Isopoda", "Mysidacea", "Palaemonidae", "Parastacidae", "Astacidae"), 
+    AI_Decapoda = AI_Family %in% c( "Cambaridae", "DECAPODA", "Palaemonidae", "Parastacidae", "Astacidae"),
     AI_Noninsect = (AI_Crustacean | AI_Gastropod | AI_Bivalve | AI_Family %in% c("Annelida","Acariformes","Nemertea",
                                                                                  "Platyheminthes","Planariidae",# ADDED BY KSM DEC 23
                                                                                  "MOLLUSCA","NEMATOMORPHA","NEMATODA",
@@ -627,7 +630,7 @@ ai_combined <- ai_df %>%
                         "Aeshnidae","Calopterygidae","Cordulegastridae","Gomphidae","Libellulidae",
                         "Ptychopteridae",
                         "Elmidae","Psephenidae",
-                        "Unionidae","Ancylidae","Planorbidae","Pleuroceridae") |
+                        "Unionidae","Ancylidae","Planorbidae","Pleuroceridae","Acroloxidae") |
       AI_Taxon2 =="Tipula" |
       (AI_Taxon2 =="Helichus" & AI_Lifestage=="insect adult" ), 
     AI_GOLD = (AI_Gastropod| (AI_Family %in% "Annelida") | AI_Diptera),
@@ -647,7 +650,8 @@ ai_combined <- ai_df %>%
                                    #Other insects where all taxa have TV > 8
                                    "Belostomatidae","Corixidae","Haliplidae"),
     AI_Tolerant_Alt = (AI_Noninsect  & !(AI_Bivalve|AI_Crayfish) |
-                         AI_Family %in% c("Culicidae","Chironomidae"))
+                         AI_Family %in% c("Culicidae","Chironomidae")),
+    AI_OtherMacro = !AI_EPT & !AI_OCH & !AI_Basommatophora & !AI_Decapoda,
   )
 
 
@@ -745,6 +749,15 @@ ai_metrics<-ai_combined2 %>%
             EPT_taxa = AI_Family[AI_EPT] %>% unique() %>% length() ,#sum(AI_EPT),
             EPT_relabd = case_when(TotalAbundance==0~1,T~(EPT_abundance / TotalAbundance)),
             EPT_reltaxa = case_when(Richness==0~1,T~(EPT_taxa / Richness)),
+            Ephemeroptera_abundance = sum(AI_Ephemeroptera*AI_Abundance),
+            Plecoptera_abundance = sum(AI_Plecoptera*AI_Abundance),
+            Trichoptera_abundance = sum(AI_Trichoptera*AI_Abundance),
+            Hemiptera_abundance = sum(AI_Hemiptera*AI_Abundance),
+            Coleoptera_abundance = sum(AI_Coleoptera*AI_Abundance),
+            Decapoda_abundance = sum(AI_Decapoda*AI_Abundance),
+            Odonata_abundance = sum(AI_Odonata*AI_Abundance),
+            Basommatophora_abundance = sum(AI_Basommatophora*AI_Abundance),
+            OtherMacro_abundance = sum(AI_OtherMacro*AI_Abundance),
             GOLD_abundance = sum(AI_GOLD*AI_Abundance),
             GOLD_taxa = AI_Family[AI_GOLD] %>% unique() %>% length(),#sum(AI_GOLD),
             OCH_abundance = sum(AI_OCH*AI_Abundance),
@@ -775,5 +788,5 @@ ai_metrics<-ai_combined2 %>%
   ungroup()
 
 write_csv(ai_metrics, "Data/ai_metrics.csv")
+skim_without_charts(ai_metrics)
 
-skim(ai_metrics)

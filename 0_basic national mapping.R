@@ -1,15 +1,15 @@
 library(sf)
 library(tidyverse)
 
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
-  bind_rows(
-    read_csv("Data/pnw_xwalk.csv") %>%
-              transmute(sitecode=as.character(sitecode),
-                        Class, Region_detail, Region, lat, long)
-            ) %>%
-  mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
-                                    T~Region_detail) %>%
-           factor(levels=c("AW","WM","GP","NE","SE", "CB")),
+xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
+  # bind_rows(
+  #   read_csv("Data/pnw_xwalk.csv") %>%
+  #             transmute(sitecode=as.character(sitecode),
+  #                       Class, Region_detail, Region, lat, long)
+  #           ) %>%
+  mutate(Region_detail2 = #case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
+                           #         T~Region_detail) %>%
+           factor(Region_detail2, levels=c("PNW", "AW","WM","GP","NE","SE", "CB")),
          Class=factor(Class, levels=c("P","I","E","U"))) %>%
   mutate(beta_region = case_when(Region_detail2=="NE"~"Northeast",
                                  Region_detail2=="SE"~"Southeast",
@@ -28,7 +28,7 @@ xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
                              Region_detail=="GP_S"~4,
                              Region_detail %in% c("GP_U","GP_C","GP_N")~3)) #%>%
   
-xwalk_df$Region_detail
+xwalk_df %>% skim_without_charts()
 
 sdam_sf<-read_sf("NotForGit/Shapefiles/BetaSDAM_Regions/Major_SDAM_regions.shp")
 mlra_sf<-read_sf("NotForGit/Shapefiles/MLRA_Regions/MLRA_Lower48.shp") %>% st_transform(crs=st_crs(sdam_sf)) %>%
@@ -73,7 +73,8 @@ xwalk_sf %>%
   st_join(ohwm_sf %>% select(ohwm_region, ohwm_id)) %>%
   # st_join(nwca_sf %>% select(nwca_region, nwca_id))
   st_join(mlra_sf %>% select(corps_region, corps_id)) %>%
-  group_by(ohwm_region) %>% tally()
+  group_by(ohwm_region) %>% 
+  tally()
 
 write_csv(xwalk_sf %>%
             st_join(ohwm_sf %>% select(ohwm_region, ohwm_id)) %>%
@@ -188,3 +189,12 @@ ggplot()+geom_sf(data=nars9_sf, aes(fill=NWCA5))+
   geom_sf(data=xwalk_sf)
 
 nars9_sf$geometry[554]
+
+xwalk_sf %>%
+  filter(Region!="CB") %>%
+  filter(Class %in% c("I","P","E")) %>%
+  as.data.frame() %>%
+  select(sitecode, Class) %>%
+  unique() %>%
+  group_by(Class) %>% tally() %>%
+  mutate(pct=n/1224)
