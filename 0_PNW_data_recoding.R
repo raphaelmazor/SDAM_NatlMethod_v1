@@ -28,9 +28,17 @@ pnw_df<-pnw_df_raw%>%
             UplandRootedPlants_score2 = case_when(Roots %in% c("0","1","2")~1,
                                                   Roots %in% c("3")~0,
                                                   T~NA_real_),
+             Mosses,
             AlgaeAbundanceMossCover_Score = case_when(Mosses=="VNA"~NA_real_,
+                                                      Mosses %in% c("0")~0,
+                                                      Mosses %in% c("0.5")~0.5,
+                                                      Mosses %in% c("1")~1,
+                                                      Mosses %in% c("1.5")~1,
+                                                      T~NA_real_),
+            AlgaeAbundanceMossCover_Score2 = case_when(Mosses=="VNA"~NA_real_,
+                                                      Mosses %in% c("0")~0,
                                                       Mosses %in% c("0.5")~1,
-                                                      Mosses %in% c("1","1.5")~1,
+                                                      Mosses %in% c("1","1.5")~2,
                                                       T~NA_real_),
             ironox_bfscore_PNW = case_when(Bacteria %in% c("0")~0,
                                            Bacteria %in% c("1","2","3")~1.5,
@@ -83,9 +91,9 @@ pnw_df<-pnw_df_raw%>%
                                                   Other_macro %in% c("0")~0,
                                                   Other_macro %in% c("1")~1,
                                                   Other_macro %in% c("2","3","4")~2),
-            # EPT_SumOfIndividuals=???,
-            # OCH_SumOfIndividuals=???,
-            # EPT_SumOfIndividuals=???,
+            EPT_SumOfIndividuals=Ephemeroptera_SumOfIndividuals+Plecoptera_SumOfIndividuals+Trichoptera_SumOfIndividuals,
+            OCH_SumOfIndividuals=Odonata_SumOfIndividuals+Coleoptera_SumOfIndividuals+Hemiptera_SumOfIndividuals,
+            
             MacroGroupsPresent = 
               (Ephemeroptera_SumOfIndividuals>0)+
               (Plecoptera_SumOfIndividuals>0)+
@@ -109,8 +117,13 @@ pnw_df<-pnw_df_raw%>%
                                         Redox=="1.5"~3)
             
   )
+
+pnw_df %>% select(contains("moss"))  %>%
+  skim()
+  
 pnw_df %>%
-  na.omit()
+  na.omit() %>%
+  select(SiteCode) %>% unique() 
   skim_without_charts()
 
 # gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
@@ -119,8 +132,7 @@ pnw_df %>%
 #   pnw_df %>%
 #   inner_join(gis_metrics_df)
 
-write_csv(pnw_df %>%
-            select(-AlgaeAbundanceMossCover_Score), "NotForGit/Step1/pnw_df_step1.csv")
+write_csv(pnw_df , "NotForGit/Step1/pnw_df_step1.csv")
 
 pnw_df %>% skim_without_charts()
 pnw_df %>%
@@ -142,3 +154,4 @@ pnw_df %>%
   unique() %>%
   group_by(Class) %>%
   tally()
+

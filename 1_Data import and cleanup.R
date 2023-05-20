@@ -284,7 +284,8 @@ main_df<-   main_raw %>%
     AlgalCover_Upstream=streambeddeadmats,
     AlgalCover_Live_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Live),
     AlgalCover_Dead_NoUpstream = case_when(AlgalCover_Upstream=="yes"~0,T~AlgalCover_Dead),
-    AlgalCover_LiveOrDead_NoUpstream = case_when(AlgalCover_Live_NoUpstream>=AlgalCover_Dead_NoUpstream~AlgalCover_Live_NoUpstream, T~AlgalCover_Dead),
+    AlgalCover_LiveOrDead = case_when(AlgalCover_Live>=AlgalCover_Dead~AlgalCover_Live, T~AlgalCover_Dead),
+    AlgalCover_LiveOrDead_NoUpstream = case_when(AlgalCover_Live_NoUpstream>=AlgalCover_Dead_NoUpstream~AlgalCover_Live_NoUpstream, T~AlgalCover_Dead_NoUpstream),
     AlgalCover_notes= streambedalgaenotes, 
     
     dens_UU=u_upstream,
@@ -319,9 +320,19 @@ main_df<-   main_raw %>%
                                             Algae_score>0  & Algae_score<=2 & Moss_cover <=2 ~ 0.5,
                                             Algae_score==0 & Moss_cover>0 & Moss_cover <=2 ~ 0.5,
                                             Algae_score==3~1,
-                                            T~1
-    ),
-    
+                                            T~1),
+    AlgaeAbundanceMossCover_nm_conversion=case_when(is.na(Algae_score)~NA_real_,
+                                            Algae_score==0~0,
+                                            Algae_score<=1~1,
+                                            Algae_score>1~2),
+    AlgaeAbundanceMossCover_algcover_conversion=case_when(is.na(AlgalCover_LiveOrDead)~NA_real_,
+                                                          AlgalCover_LiveOrDead==0~0,
+                                                          AlgalCover_LiveOrDead<=1~1,
+                                                          AlgalCover_LiveOrDead>1~2),
+    AlgaeAbundanceMossCover_mosscover_conversion=case_when(is.na(Moss_cover)~NA_real_,
+                                                           Moss_cover==0~0,
+                                                           Moss_cover<=1~1,
+                                                           Moss_cover>1~2),
     DifferencesInVegetation_score=vegetationdifferencescore, 
     RiparianCorridor_score=DifferencesInVegetation_score,
     DifferencesInVegetation_notes=vegenotes, 
@@ -341,7 +352,9 @@ main_df<-   main_raw %>%
          
          PctShading=mean(c(dens_UU/.17, dens_UL/.17, dens_UR/.17, dens_UD/.17,
                            dens_MU/.17, dens_ML/.17, dens_MR/.17, dens_MD/.17,
-                           dens_DU/.17, dens_DL/.17, dens_DR/.17, dens_DD/.17), na.rm = T)) %>%
+                           dens_DU/.17, dens_DL/.17, dens_DR/.17, dens_DD/.17), na.rm = T),
+         AlgaeAbundanceMossCover_Score2 = max(AlgaeAbundanceMossCover_nm_conversion,AlgaeAbundanceMossCover_algcover_conversion, AlgaeAbundanceMossCover_mosscover_conversion, na.rm=T),
+         ) %>%
   ungroup() %>%
   #Eliminate interim metrics used for calculating other metrics
   select(-Bankwidth_0, -Bankwidth_15, -Bankwidth_30,
@@ -351,7 +364,7 @@ main_df<-   main_raw %>%
                                             !is.na(ChannelDimensions_score_NM)~ChannelDimensions_score_NM,
                                             T~NA_real_))
 
-main_df %>% select(contains("dimens"))
+main_df %>% select(contains("moss"))
 ####Soil moisture
 main_df$SoilMoisture1 %>% unique()
 
@@ -595,6 +608,8 @@ ai_metrics2<-main_df %>%
                                                 TotalAbundance<=5~1,
                                                 TotalAbundance>5~2,
                                      T~NA_real_),
+    EPT_SumOfIndividuals=Ephemeroptera_SumOfIndividuals+Plecoptera_SumOfIndividuals+Trichoptera_SumOfIndividuals,
+    OCH_SumOfIndividuals=Odonata_SumOfIndividuals+Coleoptera_SumOfIndividuals+Hemiptera_SumOfIndividuals,
     MacroGroupsPresent = 
       (Ephemeroptera_SumOfIndividuals>0)+
       (Plecoptera_SumOfIndividuals>0)+
@@ -636,76 +651,8 @@ main_df<-main_df %>%
 
 
 
-BioPreds<-c(
-  #Aquatic invertebrates
-  ##ai_mets
-  "TotalAbundance", "Richness", "mayfly_abundance", "perennial_PNW_abundance", 
-  "perennial_PNW_taxa", "perennial_PNW_live_abundance", "perennial_NC_abundance", 
-  "perennial_NC_taxa", "perennial_NC_live_abundance", "EPT_abundance", 
-  "EPT_taxa", "EPT_relabd", "EPT_reltaxa", "GOLD_abundance", "GOLD_taxa", 
-  "OCH_abundance", "OCH_taxa", "Noninsect_abundance", "Noninsect_taxa", 
-  "Noninsect_relabund", "Noninsect_reltaxa", "GOLD_relabd", "GOLD_reltaxa", 
-  "OCH_relabd", "OCH_reltaxa", "GOLDOCH_relabd", "GOLDOCH_reltaxa", 
-  "Crayfish_abundance", "Crayfish_taxa", "Mollusk_abundance", "Mollusk_taxa", 
-  "Bivalves_NonFG_Abundance", "Clam_Fingernail_Abundance", "TolRelAbund", 
-  "TolRelAbundAlt", "NonTolTaxa", "NonTolTaxaAlt", "TolTaxa", "TolTaxaAlt",
-  ##other invert metrics
-  #BMI_score not calculated for NESE
-  #Vegetation
-  "hydrophytes_present","hydrophytes_present_noflag",
-  "UplandRootedPlants_score",# "FibrousRootedPlants_score" Only in NESE
-  "DifferencesInVegetation_score", "Moss_cover","Liverwort_cover",
-  "PctShading",
-  #algae
-  "AlgalCover_Live","AlgalCover_LiveOrDead","AlgalCover_LiveOrDead_NoUpstream",#Algae_score not calculated for NESE
-  #Fish
-  "Fish_score_NM","Fish_PA","Fish_PA_nomosq",
-  #Other bio
-  "ironox_bfscore_NM"
-)
-#HYDROLOGIC INDICATORS
 
 
-
-HydroPreds<-c(
-  #NM varz
-  "WaterInChannel_score","HydricSoils_score","springs_score_NM",
-  #Others and novel
-  "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","WoodyJams_number",
-  "SoilMoist_MeanScore",  "SoilMoist_MaxScore"
-)
-
-WaterPreds<-c("WaterInChannel_score", "springs_score_NM", 
-              "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct",
-              "IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
-HydroPreds_Indirect<-setdiff(HydroPreds, WaterPreds)
-
-#GEOMORPH INDICATORS
-main_df %>%
-  # select(Region_DB, ironox_bfscore_NM) %>%
-  select(Region_DB, contains("SedimentOnPlantsDebris_score")) %>%
-  group_by(Region_DB) %>%
-  skim_without_charts()
-
-GeomorphPreds<-c(
-  #NM varz
-  "Sinuosity_score","ChannelDimensions_score","RifflePoolSeq_score",
-  "SubstrateSorting_score","SedimentOnPlantsDebris_score",
-  #Other varz
-  "BankWidthMean","Slope"#"erosion_score","floodplain_score"
-)
-
-GISPreds<-c(#"Eco1","Eco2","Eco3",
-  "tmean", "tmax", "tmin", 
-  "ppt", 
-  "ppt.m01", "ppt.m02", "ppt.m03", "ppt.m04", "ppt.m05", "ppt.m06", "ppt.m07", "ppt.m08", "ppt.m09", "ppt.m10", "ppt.m11", "ppt.m12", 
-  "temp.m01", "temp.m02", "temp.m03", "temp.m04", "temp.m05", "temp.m06", "temp.m07", "temp.m08", "temp.m09", "temp.m10", "temp.m11", "temp.m12", 
-  "Elev_m", 
-  "MeanSnowPersistence_10", "MeanSnowPersistence_05", "MeanSnowPersistence_01", 
-  "SnowDom_SP10", "SnowDom_SP05", "SnowDom_SP01",
-  "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
-  "temp.234", "temp.567", "temp.8910", "temp.11121"
-)
 write_csv(main_df, "NotForGit/Step1/main_df_step1.csv")
 write_csv(xwalk_df, "NotForGit/Step1/xwalk_df.csv")
 

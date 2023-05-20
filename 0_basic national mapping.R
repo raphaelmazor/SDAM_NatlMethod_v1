@@ -111,8 +111,30 @@ randpal_df<-tibble(pal=viridisLite::cividis(108),
 
 
 
-ggplot()+geom_sf(data=nwca_sf, aes(fill=nwca_region))
+ggplot()+
+  geom_sf(data=all_regions_sf, aes(fill=STRAT))+
+  geom_sf(data=all_regions_sf %>% filter(STRAT=="Pacific Northwest" & TYPE=="SDAM"), fill=NA, color="chartreuse")+
+  scale_fill_manual(values=randpal_df$pal, guide="none")+
+  coord_sf(xlim=c(-125, -111),
+           ylim=c(41.5, 49.5))+
+  theme_bw()+
+  facet_wrap(~TYPE)+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
   
+
+ggplot()+
+  geom_sf(data=usace_sf, aes(fill=DIV_SYM))+
+  geom_sf(data=sdam_sf %>% filter(SDAM == "Pacific Northwest"), fill=NA, color="chartreuse")+
+  geom_sf(data=xwalk_sf)+
+  coord_sf(xlim=c(-125, -111),
+           ylim=c(41.5, 49.5))+
+  theme_bw()+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
 ggplot()+
   geom_sf(data=all_regions_sf %>% filter(TYPE!="Eco3") , aes(fill=STRAT), color="white")+
   geom_sf(data=xwalk_sf %>% filter(Class!="U"), aes(shape=Class))+

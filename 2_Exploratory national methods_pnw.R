@@ -1,64 +1,48 @@
 library(tidyverse)
-
+library(skimr)
+library(clipr)
 ######Define metrics
 BioPreds<-c(
   #Aquatic invertebrates
-  ##ai_mets
-  "TotalAbundance", "Richness", "mayfly_abundance", "perennial_PNW_abundance", 
-  "perennial_PNW_taxa", "perennial_PNW_live_abundance", "perennial_NC_abundance", 
-  "perennial_NC_taxa", "perennial_NC_live_abundance", "EPT_abundance", 
-  "EPT_taxa", "EPT_relabd", "EPT_reltaxa", "GOLD_abundance", "GOLD_taxa", 
-  "OCH_abundance", "OCH_taxa", "Noninsect_abundance", "Noninsect_taxa", 
-  "Noninsect_relabund", "Noninsect_reltaxa", "GOLD_relabd", "GOLD_reltaxa", 
-  "OCH_relabd", "OCH_reltaxa", "GOLDOCH_relabd", "GOLDOCH_reltaxa", 
-  "Crayfish_abundance", "Crayfish_taxa", "Mollusk_abundance", "Mollusk_taxa", 
-  "Bivalves_NonFG_Abundance", "Clam_Fingernail_Abundance", "TolRelAbund", 
-  "TolRelAbundAlt", "NonTolTaxa", "NonTolTaxaAlt", "TolTaxa", "TolTaxaAlt",
-  ##other invert metrics
-  #BMI_score not calculated for NESE
+  "BMI_presence",
+  "Ephemeroptera_SumOfIndividuals","Plecoptera_SumOfIndividuals","Trichoptera_SumOfIndividuals",
+  "Basommatophora_SumOfIndividuals","Odonata_SumOfIndividuals","Coleoptera_SumOfIndividuals",
+  "Hemiptera_SumOfIndividuals","Decapoda_SumOfIndividuals","OtherMacro_SumOfIndividuals",
+  "EPT_SumOfIndividuals","OCH_SumOfIndividuals","MacroGroupsPresent","PerennialPNWMacroPresent",
   #Vegetation
-  "hydrophytes_present","hydrophytes_present_noflag",
-  "UplandRootedPlants_score",# "FibrousRootedPlants_score" Only in NESE
-  "DifferencesInVegetation_score", "Moss_cover","Liverwort_cover",
-  "PctShading",
+  "hydrophytes_present_any","UplandRootedPlants_score2","RiparianCorridor_score",
   #algae
-  "AlgalCover_Live","AlgalCover_LiveOrDead","AlgalCover_LiveOrDead_NoUpstream",#Algae_score not calculated for NESE
+  
   #Fish
-  # "Fish_score_NM",
-  "Fish_PA","Fish_PA_nomosq",
+  "Fish_PA",
+  
   #Other bio
-  "ironox_bfscore_NM"
-)
+  "ironox_bfscore_PNW","Amphibian_presence","AlgaeAbundanceMossCover_Score2")
+  
 #HYDROLOGIC INDICATORS
 
-
-
-HydroPreds<-c(
+HydroPreds<-c("springs_score_NM","SoilMoist_MaxScore","HydricSoils_score"
   #NM varz
-  "WaterInChannel_score","HydricSoils_score","springs_score_NM",
-  #Others and novel
-  "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct","IsolatedPools_number","WoodyJams_number",
-  "SoilMoist_MeanScore",  "SoilMoist_MaxScore"
+
+    #Others and novel
+  
+  
 )
 
-WaterPreds<-c("WaterInChannel_score", "springs_score_NM", 
-              "SurfaceFlow_pct","SurfaceSubsurfaceFlow_pct",
-              "IsolatedPools_number","SoilMoist_MeanScore", "SoilMoist_MaxScore")
+WaterPreds<-c("springs_score_NM","SoilMoist_MaxScore")
+  
+  
 HydroPreds_Indirect<-setdiff(HydroPreds, WaterPreds)
 
 #GEOMORPH INDICATORS
-main_df %>%
-  # select(Region_DB, ironox_bfscore_NM) %>%
-  select(Region_DB, contains("SedimentOnPlantsDebris_score")) %>%
-  group_by(Region_DB) %>%
-  skim_without_charts()
+
 
 GeomorphPreds<-c(
-  #NM varz
-  "Sinuosity_score","ChannelDimensions_score","RifflePoolSeq_score",
-  "SubstrateSorting_score","SedimentOnPlantsDebris_score",
+  "SubstrateSorting_score","Sinuosity_score",
+  "RifflePoolSeq_score",
   #Other varz
   "BankWidthMean","Slope"#"erosion_score","floodplain_score"
+  
 )
 
 GISPreds<-c(#"Eco1","Eco2","Eco3",
@@ -75,50 +59,40 @@ GISPreds<-c(#"Eco1","Eco2","Eco3",
 
 
 
+all_metrics<-c(BioPreds, GeomorphPreds, HydroPreds_Indirect, GISPreds)
 
 #############Import data
-# gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+
 main_df_nopnw<-read_csv("NotForGit/Step1/main_df_step1.csv")
 
 pnw_df_all<-read_csv("NotForGit/Step1/pnw_df_step1.csv") %>%
   mutate(Database="PNW",
          Region_DB="PNW",
          SiteCode=as.character(SiteCode))
-main_df_nopnw %>%
-  select(all_of(names(pnw_df_all))) %>%
-  skim_without_charts()
+
   
 pnw_df<-pnw_df_all %>%
   na.omit()
 
-
-# %>%
-#   inner_join(xwalk_df %>%
-#                rename(SiteCode=sitecode) %>%
-#                select(-Note, -DRNAREA_mi2))  %>%
-# na.omit()
-
-pnw_df %>% skim_without_charts()
+# main_df_nopnw %>%
+#   bind_rows(pnw_df) %>%
+#   left_join(gis_metrics_df) %>%
+#   filter(is.na(tmin)) %>%
+#   select(all_of(all_metrics)) %>%
+#   skim_without_charts()
 
 main_df <- main_df_nopnw %>%
   bind_rows(pnw_df) %>%
-  select(all_of(names(pnw_df))) %>%
-  select(-Erosion_Deposition_Score)
+  inner_join(gis_metrics_df)
 
-main_df %>% skim_without_charts()
+
+# main_df %>% skim_without_charts()
 # main_df %>% group_by(Region_DB) %>%
 #   select(Erosion_Deposition_Score, hydrophytes_present_any,RiparianCorridor_score, UplandRootedPlants_score2) %>%
 #   skim()
 
-xwalk_df<-read_csv("NotForGit/Step1/xwalk_df.csv") %>%
-  mutate(corps_region_short = case_when(corps_region=="USACE Eastern Mountains and Piedmont Region"~"EMP",
-                                        corps_region=="USACE Atlantic and Gulf Coastal Plain Region"~"AGCP",
-                                        corps_region=="USACE Arid West Region"~"AW",
-                                        corps_region=="USACE Western Mountains, Valleys, and Coast Region"~"WMVC",
-                                        corps_region=="USACE Great Plains Region"~"GP",
-                                        corps_region=="USACE Northcentral and Northeast Region"~"NCNE",
-                                        corps_region=="USACE Midwest Region"~"MW",
-  )) %>%
+xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv")  %>%
   filter(!Region %in% c("CB"))
 
 xwalk_df %>% group_by(ohwm_region) %>% tally()
@@ -126,9 +100,9 @@ xwalk_df %>% group_by(ohwm_region) %>% tally()
 xwalk_df %>%
   filter(Class!="U") %>%
   filter(Region_detail2!="CB") %>%
-  filter(Region_detail2!="PNW") %>%
-  select(Class, beta_region, ohwm_region, corps_region_short, nwca_region) %>%
-  pivot_longer(cols=c(beta_region, ohwm_region, corps_region_short, nwca_region),
+  # filter(Region_detail2!="PNW") %>%
+  select(Class, beta_region, ohwm_region, corps_region, nwca_region) %>%
+  pivot_longer(cols=c(beta_region, ohwm_region, corps_region, nwca_region),
                names_to="Regionalization",
                values_to="Region") %>%
   group_by(Regionalization, Region, Class) %>% 
@@ -144,19 +118,20 @@ xwalk_df %>%
 #Assesss completeness
 main_df2<-main_df %>%
   select(SiteCode, Region_DB, Database, CollectionDate,
-         all_of(c(BioPreds, GeomorphPreds, GISPreds, HydroPreds_Indirect))) %>%
+         all_of(all_metrics)) %>%
   na.omit() %>%
   inner_join(xwalk_df %>% rename(SiteCode=sitecode)) %>%
-  filter(Class!="U")
+  filter(Class!="U") 
+# main_df2 %>% group_by(Region_DB) %>% skim_without_charts()
 
 library(skimr)
-main_df2 %>% 
-  filter(ohwm_region %in% c("Northeast","Southeast")) %>%
-  skim_without_charts()
+# main_df2 %>% 
+  # filter(ohwm_region %in% c("Northeast","Southeast")) %>%
+  # skim_without_charts()
 
 
 visit_tally<-main_df2 %>%
-  group_by(SiteCode, Class) %>%
+  group_by(Region_DB,SiteCode, Class) %>%
   tally() %>%
   ungroup()
 ggplot(data=visit_tally, aes(x=n, fill=Class))+
@@ -164,6 +139,15 @@ ggplot(data=visit_tally, aes(x=n, fill=Class))+
   scale_x_continuous(breaks=c(0:12))+
   scale_fill_brewer(palette="RdYlBu")+
   theme_bw()+xlab("# visits")
+
+
+ggplot(data=visit_tally, aes(x=n, fill=Class))+
+  geom_histogram(color="black")+
+  scale_x_continuous(breaks=c(0:12))+
+  scale_fill_brewer(palette="RdYlBu")+
+  theme_bw()+xlab("# visits")+
+  facet_wrap(~Region_DB, ncol=1)
+
 
 ####Upsample to 6 per site
 visit_tally$AtLeast6Samples<-visit_tally$n>=6
@@ -174,7 +158,7 @@ main_df2_GT6 <- main_df2 %>%
   group_by(SiteCode) %>%
   slice_sample(n=6, replace=F) %>%
   ungroup() %>%
-  mutate(DataType="Real")
+  mutate(DataType="Original")
 
 
 # main_df2_LT6 <- main_df2 %>%
@@ -185,14 +169,14 @@ main_df2_GT6 <- main_df2 %>%
 set.seed(1)
 main_df2_LT6 <- main_df2 %>%
   filter(SiteCode %in% visit_tally$SiteCode[!visit_tally$AtLeast6Samples]) %>%
-  mutate(DataType="Real") %>%
+  mutate(DataType="Original") %>%
   #If visited 5 times, add a random visit
   bind_rows(
     main_df2 %>%
       filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==5]) %>%
       group_by(SiteCode) %>%
       slice_sample(n=1, replace=F) %>%
-      mutate(DataType="Upsampled") 
+      mutate(DataType="Augmented") 
   ) %>%
   #If visited 4 times, add 2 random visits
   bind_rows(
@@ -200,33 +184,33 @@ main_df2_LT6 <- main_df2 %>%
       filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==4]) %>%
       group_by(SiteCode) %>%
       slice_sample(n=2, replace=F) %>%
-      mutate(DataType="Upsampled") 
+      mutate(DataType="Augmented") 
   )%>%
   #If visited 3 times, add all visits again
   bind_rows(
     main_df2 %>%
       filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==3]) %>%
-      mutate(DataType="Upsampled") 
+      mutate(DataType="Augmented") 
   ) %>%
   #If visited 2 times, add all visits twice
   bind_rows(
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2]) %>%
-      mutate(DataType="Upsampled") , 
+      mutate(DataType="Augmented") , 
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==2]) %>%
-      mutate(DataType="Upsampled") 
+      mutate(DataType="Augmented") 
   ) %>%
   # If visited once, add all visits 5 more times
   bind_rows(
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1]) %>%
-      mutate(DataType="Upsampled") ,
+      mutate(DataType="Augmented") ,
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
-      mutate(DataType="Upsampled") , 
+      mutate(DataType="Augmented") , 
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
-      mutate(DataType="Upsampled") , 
+      mutate(DataType="Augmented") , 
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
-      mutate(DataType="Upsampled") , 
+      mutate(DataType="Augmented") , 
     main_df2 %>% filter(SiteCode %in% visit_tally$SiteCode[visit_tally$n==1])%>%
-      mutate(DataType="Upsampled") 
+      mutate(DataType="Augmented") 
   ) %>%
   ungroup()
 
@@ -245,23 +229,56 @@ main_df3 %>%
 library(tidymodels)
 
 mod_summary<- xwalk_df %>% 
-  select(all_region,beta_region,ohwm_region,corps_region_short,nwca_region) %>%
-  pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region_short,nwca_region), 
+  select(all_region,beta_region,ohwm_region,corps_region,nwca_region) %>%
+  pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region,nwca_region), 
                names_to = "Stratification", values_to = "Strata") %>%
-  crossing(IncludeGISPreds=c(T,F)) %>%
-  mutate(ModName = case_when(IncludeGISPreds~paste(Stratification, Strata, "GIS", sep="_"),
-                             T~paste(Stratification, Strata)))
+  crossing(IncludeGISPreds=c(T,F),
+           IncludePNW=c(T,F)) %>%
+  mutate(ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
+                             IncludeGISPreds & !IncludePNW~paste(Stratification, Strata, "GIS", sep="_"),
+                             !IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW", sep="_"),
+                             T~paste(Stratification, Strata))) %>%
+  mutate(FlagNoPNW = case_when(
+    Stratification == "all_region"~"OK",
+    
+    Stratification == "beta_region" & Strata %in% c("PNW") & IncludePNW~"OK",
+    Stratification == "beta_region" & Strata %in% c("PNW") & !IncludePNW~"Delete",
+    Stratification == "beta_region" & !Strata %in% c("PNW") & IncludePNW~"Delete",
+    Stratification == "beta_region" & !Strata %in% c("PNW") & !IncludePNW~"OK",
+    
+    Stratification == "corps_region" & Strata %in% c("AW","WMVC") & IncludePNW~"OK",
+    Stratification == "corps_region" & Strata %in% c("AW","WMVC") & !IncludePNW~"OK",
+    Stratification == "corps_region" & !Strata %in% c("AW","WMVC") & IncludePNW~"Delete",
+    Stratification == "corps_region" & !Strata %in% c("AW","WMVC") & !IncludePNW~"OK",
+    
+    Stratification == "nwca_region" & Strata %in% c("XER","WMT") & IncludePNW~"OK",
+    Stratification == "nwca_region" & Strata %in% c("XER","WMT") & !IncludePNW~"OK",
+    Stratification == "nwca_region" & !Strata %in% c("XER","WMT") & IncludePNW~"Delete",
+    Stratification == "nwca_region" & !Strata %in% c("XER","WMT") & !IncludePNW~"OK",
+    
+    Stratification == "ohwm_region" & Strata %in% c("Northwest") & IncludePNW~"OK",
+    Stratification == "ohwm_region" & Strata %in% c("Northwest") & !IncludePNW~"OK",
+    Stratification == "ohwm_region" & !Strata %in% c("Northwest") & IncludePNW~"Delete",
+    Stratification == "ohwm_region" & !Strata %in% c("Northwest") & !IncludePNW~"OK",
+    )) %>%
+  filter(FlagNoPNW != "Delete")
+
+pnw_sites <-xwalk_df$sitecode[which(xwalk_df$beta_region=="PNW")]
 
 mod_dats<-lapply(1:nrow(mod_summary), function(i){
   stratf.i=mod_summary$Stratification[i]
   strat.i=mod_summary$Strata[i]
-  print(paste(stratf.i, strat.i))
+  pnw.i=mod_summary$IncludePNW[i]
+  print(paste(stratf.i, strat.i, pnw.i))
   main_df3.i<-main_df3 %>%
-    pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region_short,nwca_region), 
+    pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region,nwca_region), 
                  names_to = "Stratification", values_to = "Strata") %>%
     filter(Stratification==stratf.i & Strata==strat.i) 
-  main_df3.i
-})
+  if(pnw.i)
+    main_df3.i
+  else
+    main_df3.i %>% filter(!SiteCode %in% pnw_sites )
+  })
 
 
 set.seed(2)
@@ -299,8 +316,8 @@ mod_summary$n_testing_E<-sapply(mod_dats_split, function(x){
   x %>% testing() %>% filter(Class=="E") %>% nrow() })
 
 #####Recursive feature eliminiation
-library(caret)
-my_ctrl <- rfeControl(functions = rfFuncs, method = "cv",verbose = FALSE, returnResamp = "all")
+# library(caret)
+# my_ctrl <- rfeControl(functions = rfFuncs, method = "cv",verbose = FALSE, returnResamp = "all")
 
 #RFE is prohibitively slow
 # maxsize_x<-21
@@ -334,12 +351,90 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
     mydat= mod_dats_training[[i]] %>%  select(Class, all_of(c(BioPreds, GeomorphPreds, HydroPreds_Indirect)))
   
   set.seed(200+i)
-  randomForest(Class~., 
+  rf.i=randomForest(Class~., 
                data=mydat, 
                importance=T,
                proximity=T)
+  if(!gis.i)
+    rf.i
+  else
+  {
+    best2_gis_df = rf.i$importance %>%
+      as_tibble() %>%
+      mutate(myvar = row.names(rf.i$importance)) %>%
+      filter(myvar %in% GISPreds) %>%
+      slice_max(MeanDecreaseAccuracy, n=2)
+    set.seed(300+i)
+    randomForest(Class~., 
+                      data=mydat %>% select(Class, all_of(c(BioPreds, GeomorphPreds, HydroPreds_Indirect, best2_gis_df$myvar))), 
+                      importance=T,
+                      proximity=T)
+  }
   
 })
+
+####
+#Importance
+
+rf_sum_importance<-lapply(1:nrow(mod_summary), function(i){
+  gis.i=mod_summary$IncludeGISPreds[i]
+  pnw.i=mod_summary$IncludePNW[i]
+  # flag.i=mod_summary$FlagNoPNW[i]
+  regz.i=mod_summary$Stratification[i]
+  reg.i=mod_summary$Strata[i]
+  mod.i=my_rfs[[i]]
+  # print(mod.i)
+  xmat=mod.i$importance
+  xdf=xmat %>%
+    as_tibble() %>%
+    mutate(Regionalization=regz.i,
+           Region_id=reg.i,
+           GIS=case_when(gis.i~"GIS",T~"No GIS"),
+           PNW = case_when(pnw.i~"PNW",T~"No PNW"),
+           PNWtf=pnw.i,
+           # Flag=flag.i,
+           Metric=row.names(xmat)) %>%
+    rename(P_imp=P, I_imp=I, E_imp=E)
+  
+}) %>% bind_rows() %>%
+  mutate(MetricType=case_when(Metric %in% GeomorphPreds~"Geomorphic",
+                              Metric %in% GISPreds~"GIS",
+                              Metric %in% HydroPreds_Indirect~"Hydro",
+                              Metric %in% BioPreds~"Bio",
+                              T~"Other" ),
+         RegLabel = paste(Regionalization, Region_id, sep="-"))
+
+rf_sum_importance %>% group_by(MetricType) %>% tally()
+imp_plot_dat<-rf_sum_importance %>%
+  mutate(MeanDecreaseAccuracy=case_when(MeanDecreaseAccuracy<0~0,T~MeanDecreaseAccuracy)) %>%
+  arrange(MeanDecreaseAccuracy)
+imp_plot_dat$Metric<-factor(imp_plot_dat$Metric, levels=unique(imp_plot_dat$Metric))
+
+met_colors_df<-imp_plot_dat %>%
+  select(MetricType, Metric) %>%
+  mutate(MetricColor = case_when(MetricType =="Bio"~"#4daf4a",
+                                 MetricType =="Hydro"~"#377eb8",
+                                 MetricType =="Geomorphic"~"#d95f02",
+                                 MetricType =="GIS"~"#7570b3",
+                                 
+  ))
+variable_importance_plot<-ggplot(imp_plot_dat %>% 
+                                   group_by(Regionalization, Region_id, GIS) %>%
+                                   slice_min(PNWtf, n=1), 
+                                 aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile(color="white")+
+  scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(GIS~Regionalization, scales="free", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1),
+        panel.grid = element_blank())+
+  xlab("")+ylab("")
+
+ggsave(variable_importance_plot, filename="NotForGit/variable_importance_plot.png", height=15, width=9)
+####################
+
+
 
 mod_summary$ErrRate_all<-  sapply(my_rfs, function(x){ x$err.rate %>% tail(1)["OOB"]})
 mod_summary$ErrRate_P<-  sapply(my_rfs, function(x){ x$err.rate %>% tail(1)["P"]})
@@ -420,6 +515,34 @@ mod_summary$NMI_freq<-sapply(1:nrow(mod_summary), function(i){
   sum(xdf$Class_pred50_best =="NMI")/length(xdf$Class_pred50_best)
 })
 
+mod_summary$P_freq<-sapply(1:nrow(mod_summary), function(i){
+  xdf = my_predicted_classes_combined[[i]] 
+  sum(xdf$Class_pred50_best =="P")/length(xdf$Class_pred50_best)
+})
+mod_summary$I_freq<-sapply(1:nrow(mod_summary), function(i){
+  xdf = my_predicted_classes_combined[[i]] 
+  sum(xdf$Class_pred50_best =="I")/length(xdf$Class_pred50_best)
+})
+mod_summary$ALI_freq<-sapply(1:nrow(mod_summary), function(i){
+  xdf = my_predicted_classes_combined[[i]] 
+  sum(xdf$Class_pred50_best =="ALI")/length(xdf$Class_pred50_best)
+})
+mod_summary$E_freq<-sapply(1:nrow(mod_summary), function(i){
+  xdf = my_predicted_classes_combined[[i]] 
+  sum(xdf$Class_pred50_best =="E")/length(xdf$Class_pred50_best)
+})
+
+mod_summary %>%
+  select(Stratification, Strata, IncludeGISPreds, IncludePNW, ModName,
+         P_freq, I_freq, ALI_freq, E_freq, NMI_freq) %>%
+  pivot_longer(cols=(ends_with("freq"))) %>%
+  mutate(name=factor(name, levels=c("P_freq","I_freq","ALI_freq","E_freq", "NMI_freq"))) %>%
+  ggplot(aes(x=ModName, y=value))+
+  geom_bar(aes(fill=name), stat="identity") +
+  scale_fill_manual(values=c("#08519c","#6baed6","#8856a7","#f768a1","orange"))+
+  coord_flip()
+
+
 mod_summary$Accuracy_PvIvE_training<-sapply(1:nrow(mod_summary), function(i){
   xdf = my_predicted_classes_combined[[i]] %>%
     filter(SiteSet=="Training") %>%
@@ -462,12 +585,16 @@ mod_summary$Accuracy_EvALI_testing<-sapply(1:nrow(mod_summary), function(i){
 
 mod_summary$Precision_PvIvE_training<-sapply(1:nrow(mod_summary), function(i){
   xdf = my_predicted_classes_combined[[i]] %>%
+    filter(DataType=="Original") %>%
     filter(SiteSet=="Training")
   xdf2<-xdf %>% 
-    group_by(SiteCode, Class_pred50_best) %>%
+    group_by(SiteCode) %>%
+    mutate(n_orig = length(SiteCode)) %>%
+    filter(n_orig>1) %>%
+    group_by(SiteCode, n_orig, Class_pred50_best) %>%
     tally() %>%
     slice_max(order_by = n) %>%
-    mutate(Consistency = n/6) %>%
+    mutate(Consistency = n/n_orig) %>%
     ungroup() %>%
     summarise(Precision=mean(Consistency))
   xdf2$Precision
@@ -477,10 +604,13 @@ mod_summary$Precision_PvIvE_testing<-sapply(1:nrow(mod_summary), function(i){
   xdf = my_predicted_classes_combined[[i]] %>%
     filter(SiteSet=="Testing")
   xdf2<-xdf %>% 
-    group_by(SiteCode, Class_pred50_best) %>%
+    group_by(SiteCode) %>%
+    mutate(n_orig = length(SiteCode)) %>%
+    filter(n_orig>1) %>%
+    group_by(SiteCode, n_orig, Class_pred50_best) %>%
     tally() %>%
     slice_max(order_by = n) %>%
-    mutate(Consistency = n/6) %>%
+    mutate(Consistency = n/n_orig) %>%
     ungroup() %>%
     summarise(Precision=mean(Consistency))
   xdf2$Precision
@@ -495,10 +625,13 @@ mod_summary$Precision_EvALI_training<-sapply(1:nrow(mod_summary), function(i){
                                           Class_pred50_best %in% c("NMI")~"NMI",
                                           T~"Other"))
   xdf2<-xdf %>% 
-    group_by(SiteCode, Class_pred50_best2) %>%
+    group_by(SiteCode) %>%
+    mutate(n_orig = length(SiteCode)) %>%
+    filter(n_orig>1) %>%
+    group_by(SiteCode, n_orig, Class_pred50_best2) %>%
     tally() %>%
     slice_max(order_by = n) %>%
-    mutate(Consistency = n/6) %>%
+    mutate(Consistency = n/n_orig) %>%
     ungroup() %>%
     summarise(Precision=mean(Consistency))
   xdf2$Precision
@@ -512,10 +645,13 @@ mod_summary$Precision_EvALI_testing<-sapply(1:nrow(mod_summary), function(i){
                                           Class_pred50_best %in% c("NMI")~"NMI",
                                           T~"Other"))
   xdf2<-xdf %>% 
-    group_by(SiteCode, Class_pred50_best2) %>%
+    group_by(SiteCode) %>%
+    mutate(n_orig = length(SiteCode)) %>%
+    filter(n_orig>1) %>%
+    group_by(SiteCode, n_orig, Class_pred50_best2) %>%
     tally() %>%
     slice_max(order_by = n) %>%
-    mutate(Consistency = n/6) %>%
+    mutate(Consistency = n/n_orig) %>%
     ungroup() %>%
     summarise(Precision=mean(Consistency))
   xdf2$Precision
@@ -564,26 +700,32 @@ mod_summary_long<-mod_summary %>%
                              T~"Testing"),
          Metric = paste(MetricType2, Comparison, sep="_")
   ) %>%
-  select(Stratification, Strata, IncludeGISPreds, ModName,SiteSet,
+  select(Stratification, Strata, IncludeGISPreds, IncludePNW, ModName,SiteSet,
          n_training, n_testing,
          MetricType2, Comparison,Metric, name, value
   ) 
 
 
-ggplot(data=mod_summary_long, aes(x=Strata, y=value))+
-  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+ggplot(data=mod_summary_long %>%
+         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+         slice_max(IncludePNW, n=1), 
+       aes(x=Strata, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   scale_size_manual(values=c(1,2))+
   facet_grid(Metric~Stratification, scales="free_x", space="free")+
   theme_bw()+
+  geom_hline(yintercept = c(.8,.9,.5), linetype="dotted")+
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Performance")+xlab("")
 
 ggplot(data=mod_summary_long %>%
          filter(MetricType2=="Accuracy") %>%
+         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+         slice_max(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
          mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
        aes(x=Strata, y=value))+
-  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   scale_size_manual(values=c(1,2))+
   facet_grid(Comparison~Stratification, scales="free_x", space="free")+
   theme_bw()+
@@ -593,9 +735,11 @@ ggplot(data=mod_summary_long %>%
 
 ggplot(data=mod_summary_long %>%
          filter(MetricType2=="Precision") %>%
+         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+         slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
          mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
        aes(x=Strata, y=value))+
-  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   scale_size_manual(values=c(1,2))+
   facet_grid(Comparison~Stratification, scales="free_x", space="free")+
   theme_bw()+
@@ -605,7 +749,7 @@ ggplot(data=mod_summary_long %>%
 
 
 mod_summary_long_across_strata<-mod_summary_long %>%
-  group_by(Stratification, IncludeGISPreds, SiteSet,
+  group_by(Stratification, IncludeGISPreds, IncludePNW, SiteSet,
            MetricType2, Metric, Comparison, name) %>%
   summarise(value_unweighted = mean(value),
             lowest_value = min(value)) %>%
@@ -616,10 +760,14 @@ mod_summary %>%
 
 ggplot(data=mod_summary_long %>%
          filter(MetricType2=="Accuracy") %>%
+         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+         slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
          mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
        aes(x=Strata, y=value))+
-  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
+               group_by(Stratification, IncludeGISPreds, SiteSet) %>%
+               slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
                filter(MetricType2=="Accuracy") %>%
                mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
              aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
@@ -635,11 +783,15 @@ ggplot(data=mod_summary_long %>%
 
 ggplot(data=mod_summary_long %>%
          filter(MetricType2=="Precision") %>%
+         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+         slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
          mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
        aes(x=Strata, y=value))+
-  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
                filter(MetricType2=="Precision") %>%
+               group_by(Stratification, IncludeGISPreds, SiteSet) %>%
+               slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
                mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
              aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
   scale_linetype_manual(values=c("dotted","dashed"))+
@@ -660,82 +812,13 @@ my_predicted_classes_testing[[26]] %>%
   filter(Class=="E") %>%
   tally()
 
-####
-#Importance
-
-
-rf_sum_importance<-lapply(1:nrow(mod_summary), function(i){
-  gis.i=mod_summary$IncludeGISPreds[i]
-  regz.i=mod_summary$Stratification[i]
-  reg.i=mod_summary$Strata[i]
-  mod.i=my_rfs[[i]]
-  # print(mod.i)
-  xmat=mod.i$importance
-  xdf=xmat %>%
-    as_tibble() %>%
-    mutate(Regionalization=regz.i,
-           Region_id=reg.i,
-           GIS=case_when(gis.i~"GIS",T~"No GIS"),
-           Metric=row.names(xmat)) %>%
-    rename(P_imp=P, I_imp=I, E_imp=E)
-  
-}) %>% bind_rows() %>%
-  mutate(MetricType=case_when(Metric %in% GeomorphPreds~"Geomorphic",
-                              Metric %in% GISPreds~"GIS",
-                              Metric %in% HydroPreds_Indirect~"Hydro",
-                              Metric %in% BioPreds~"Bio",
-                              T~"Other" ),
-         RegLabel = paste(Regionalization, Region_id, sep="-"))
-
-rf_sum_importance %>% group_by(MetricType) %>% tally()
-imp_plot_dat<-rf_sum_importance %>%
-  mutate(MeanDecreaseAccuracy=case_when(MeanDecreaseAccuracy<0~0,T~MeanDecreaseAccuracy),
-         Region_id = gsub("USACE ","", Region_id)) %>%
-  arrange(MeanDecreaseAccuracy)
-imp_plot_dat$Metric<-factor(imp_plot_dat$Metric, levels=unique(imp_plot_dat$Metric))
-
-met_colors_df<-imp_plot_dat %>%
-  select(MetricType, Metric) %>%
-  mutate(MetricColor = case_when(MetricType =="Bio"~"#4daf4a",
-                                 MetricType =="Hydro"~"#377eb8",
-                                 MetricType =="Geomorphic"~"#d95f02",
-                                 MetricType =="GIS"~"#7570b3",
-                                 
-  ))
-variable_importance_plot<-ggplot(imp_plot_dat, 
-                                 aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
-  geom_tile()+
-  scale_fill_viridis_c(trans="sqrt")+
-  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
-  facet_grid(GIS~Regionalization, scales="free", space="free")+
-  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
-  xlab("")+ylab("")
-
-ggsave(variable_importance_plot, filename="NotForGit/variable_importance_plot.png", height=15, width=9)
-
-
-#MOD SUMMARY SCORING
-mod_summary_long_across_strata %>%
-  mutate(Score = case_when(value_unweighted >=.95~3,
-                           value_unweighted >=.90~2,
-                           value_unweighted >=.80~1,
-                           T~0)) %>%
-  group_by(Stratification, Strata, IncludeGISPreds, ModName) %>%
-  summarise(SumScore =sum(Score)) %>%
-  ungroup() %>%
-  ggplot(aes(x=Strata, y=SumScore))+
-  geom_point(aes(color=IncludeGISPreds))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
-  facet_wrap(~Stratification, scales = "free_x", nrow=1)+
-  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))
-
 
 #####################
 #Subpop-level accuracy assessments
 
 #What are my subpops?
 #EPA regions?
+library(sf)
 epa_sf<-st_read("NotForGit/Shapefiles/Environmental_Protection_Agency_(EPA)_Regions/Environmental_Protection_Agency_(EPA)_Regions.shp")
 #USACE divisions?
 usace_sf<-st_read("NotForGit/Shapefiles/USACE_Civil_Works_Divisions/USACE_Divisions.shp")
@@ -771,16 +854,17 @@ xwalk_df2 %>% group_by(usace_reg) %>% tally()
 xwalk_df2 %>% group_by(epa_reg) %>% tally()
 
 mod_summary_assessment_strata <-  mod_summary %>%
-  select(Stratification, Strata, ModName) %>%
+  select(Stratification, Strata, ModName, IncludeGISPreds, IncludePNW) %>%
   unique() %>%
   crossing(AssessmentStratum=xwalk_sf$usace_reg %>% unique())
 
 mod_summary_assessment_strata$n_sites <- sapply(1:nrow(mod_summary_assessment_strata), function(i){
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
-  # gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -789,7 +873,7 @@ mod_summary_assessment_strata$n_sites <- sapply(1:nrow(mod_summary_assessment_st
 })
 
 mod_summary_assessment_strata<- mod_summary_assessment_strata %>%
-  crossing(IncludeGISPreds=c(T,F)) %>%
+  # crossing(IncludeGISPreds=c(T,F)) %>%
   filter(n_sites>0)
 
 
@@ -798,8 +882,9 @@ mod_summary_assessment_strata$n_P_training<-  sapply(1:nrow(mod_summary_assessme
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -813,8 +898,9 @@ mod_summary_assessment_strata$n_P_testing<-  sapply(1:nrow(mod_summary_assessmen
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -828,8 +914,9 @@ mod_summary_assessment_strata$n_I_training<-  sapply(1:nrow(mod_summary_assessme
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -843,8 +930,9 @@ mod_summary_assessment_strata$n_I_testing<-  sapply(1:nrow(mod_summary_assessmen
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -858,8 +946,9 @@ mod_summary_assessment_strata$n_E_training<-  sapply(1:nrow(mod_summary_assessme
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -872,8 +961,9 @@ mod_summary_assessment_strata$n_E_testing<-  sapply(1:nrow(mod_summary_assessmen
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -888,8 +978,9 @@ mod_summary_assessment_strata$Correct_PvIvE_training<-sapply(1:nrow(mod_summary_
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -905,8 +996,9 @@ mod_summary_assessment_strata$Correct_PvIvE_testing<-sapply(1:nrow(mod_summary_a
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -920,8 +1012,9 @@ mod_summary_assessment_strata$Correct_EvALI_training<-sapply(1:nrow(mod_summary_
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -941,8 +1034,9 @@ mod_summary_assessment_strata$Correct_EvALI_testing<-sapply(1:nrow(mod_summary_a
   stratf.i=mod_summary_assessment_strata$Stratification[i]
   strat.i= mod_summary_assessment_strata$Strata[i]
   gis.i= mod_summary_assessment_strata$IncludeGISPreds[i]
+  pnw.i= mod_summary_assessment_strata$IncludePNW[i]
   ass_subpop.i=mod_summary_assessment_strata$AssessmentStratum[i]
-  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i)
+  j<-which(mod_summary$Stratification==stratf.i & mod_summary$Strata==strat.i & mod_summary$IncludeGISPreds==gis.i & mod_summary$IncludePNW==pnw.i)
   
   xdf = my_predicted_classes_combined[[j]] %>%
     inner_join(xwalk_df2 %>% select(SiteCode=sitecode, usace_reg) %>%
@@ -963,7 +1057,7 @@ mod_summary_assessment_strata$Correct_EvALI_testing<-sapply(1:nrow(mod_summary_a
 mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
   select(-n_sites) %>%
   pivot_longer(cols=c(starts_with("n"), starts_with("Correct"))) %>%
-  group_by(Stratification, IncludeGISPreds, AssessmentStratum, name) %>%
+  group_by(Stratification, IncludeGISPreds, IncludePNW, AssessmentStratum, name) %>%
   summarise(value=sum(value)) %>%
   pivot_wider(names_from="name", values_from = "value", values_fill = 0) %>%
   ungroup() %>%
@@ -1000,11 +1094,12 @@ mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
 
 mod_summary_assessment_strata_long %>%
   filter(Stratification=="beta_region" & 
-           AssessmentStratum=="AW" & IncludeGISPreds & 
+           AssessmentStratum=="SPD" & IncludeGISPreds & 
            SiteSet=="Training")
 
 ggplot(data=mod_summary_assessment_strata_long %>%
          filter(MetricType2=="Accuracy") %>%
+         group_by(Stratification, AssessmentStratum, IncludeGISPreds, SiteSet) %>% slice_max(IncludePNW, n=1) %>% 
          mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
        aes(x=AssessmentStratum , y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
@@ -1018,43 +1113,21 @@ ggplot(data=mod_summary_assessment_strata_long %>%
   theme_bw()+
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
-  ylab("Accuracy")+xlab("")
+  ylab("Accuracy")+xlab("")+
+  scale_y_continuous(limits=c(.5,1))
 
-
-mod_summary_long_across_strata %>%
-  left_join(mod_summary_assessment_strata_long %>%
-              select(Stratification, IncludeGISPreds, WorstSubpop=AssessmentStratum, name,
-                     WorstPerformance=value) %>%
-              group_by(Stratification, IncludeGISPreds, WorstSubpop, name) %>%
-              slice_min(WorstPerformance, n=1)) %>%
-  mutate(Approach=case_when(!IncludeGISPreds~Stratification,
-                            T~paste(Stratification,"GIS"))) %>%
-  # filter(!IncludeGISPreds) %>%
-  ggplot( )+
-  geom_tile(aes(x=Metric, y=Approach, fill=value_unweighted), color="white")+
-  scale_fill_viridis_c(name="Performance")+
-  facet_wrap(~SiteSet)+
-  xlab("Stratification approach")+ylab("")+
-  coord_flip()+
+mod_summary_assessment_strata_long %>%
+  mutate(ModelData = case_when(IncludePNW ~"Includes_PNW", T~"Excludes_PNW")) %>%
+  select(-IncludePNW) %>%
+  pivot_wider(names_from=ModelData, values_from = value) %>%
+  mutate(DeltaInclude = Includes_PNW - Excludes_PNW) %>%
+  ggplot(
+    aes(x=AssessmentStratum, y=DeltaInclude)  )+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification, scales="free_x", space="free", drop=T)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
-
-mod_summary_long_across_strata %>%
-  mutate(Approach=case_when(IncludeGISPreds~Stratification,
-                            T~paste(Stratification,"GIS"))) %>%
-  select(-MetricType2, -name, -Comparison, -lowest_value) %>%
-  pivot_wider(names_from=Metric, values_from = value_unweighted) 
-
-
-ggplot(data=mod_summary_assessment_strata_long %>%
-         mutate(Approach=case_when(!IncludeGISPreds~Stratification,
-                                   T~paste(Stratification,"GIS"))) %>%
-         filter(MetricType2=="Accuracy") %>%
-         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
-       aes(y=AssessmentStratum , x=Approach))+
-  geom_tile(aes(fill=value))+
-  scale_fill_viridis_c(name="Performance")+
-  facet_grid(Comparison ~SiteSet)+
-  xlab("Assessment Subpop")+ylab("")+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Differences in Accuracy\n(With minus Without PNW)")+xlab("")+
+  geom_hline(yintercept=0)
