@@ -70,6 +70,8 @@ pnw_df<-pnw_df_all %>%
 #   filter(is.na(tmin)) %>%
 #   select(all_of(all_metrics_PNW)) %>%
 #   skim_without_charts()
+xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv")  %>%
+  filter(!Region %in% c("CB"))
 
 main_df <- main_df_nopnw %>%
   bind_rows(pnw_df) %>%
@@ -83,8 +85,6 @@ main_df <- main_df_nopnw %>%
 #   select(Erosion_Deposition_Score, hydrophytes_present_any,RiparianCorridor_score, UplandRootedPlants_score2) %>%
 #   skim()
 
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv")  %>%
-  filter(!Region %in% c("CB"))
 
 xwalk_df %>% group_by(ohwm_region) %>% tally()
 
