@@ -3,9 +3,11 @@ library(skimr)
 library(clipr)
 ######Define metrics
 #Define sets of predictors suitable for different data sets
+#PNW: Appropriate for PNW, West, GP, and East
+#WGE: Appropriate for West, GP and East, but not PNW
+#WG: Appropriate for West and GP, but not East or PNW
 
 #BIOLOGICAL PREDICTORS
-
 BioPreds_PNW<-c(
   #Aquatic invertebrates
   "BMI_presence",
@@ -21,7 +23,32 @@ BioPreds_PNW<-c(
   "Fish_PA",
   #Other bio
   "ironox_bfscore_PNW","Amphibian_presence","AlgaeAbundanceMossCover_Score2")
+####
+BioPreds_WGE<-c(
   
+  #Aquatic insects
+  "TotalAbundance", "Richness", 
+  "perennial_PNW_abundance", "perennial_PNW_taxa","perennial_PNW_live_abundance",
+  "perennial_NC_abundance", "perennial_NC_taxa", "perennial_NC_live_abundance",
+  "Ephemeroptera_abundance", "EPT_abundance",  "EPT_taxa", #"EPT_relabd", "EPT_reltaxa", 
+  "Plecoptera_abundance", "Trichoptera_abundance", "Hemiptera_abundance", 
+  "Coleoptera_abundance", "Decapoda_abundance", "Odonata_abundance", 
+  # "Basommatophora_abundance", 
+  "OtherMacro_abundance", 
+  "GOLD_abundance", "GOLD_taxa", #"GOLD_relabd", "GOLD_reltaxa",
+  "OCH_abundance", "OCH_taxa",#"OCH_relabd", "OCH_reltaxa",
+  # "GOLDOCH_relabd", "GOLDOCH_reltaxa",
+  "Noninsect_abundance", "Noninsect_taxa", 
+  "Noninsect_relabund", "Noninsect_reltaxa", 
+  # "Crayfish_abundance", "Crayfish_taxa", 
+  "Mollusk_abundance",  "Mollusk_taxa", 
+  "TolRelAbundAlt","TolTaxaAlt",
+  
+  #Vegetation
+  )
+
+
+
 #HYDROLOGIC INDICATORS
 HydroPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore","HydricSoils_score")
 WaterPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore")
@@ -39,7 +66,7 @@ GISPreds<-c(#"Eco1","Eco2","Eco3",
   "ppt", 
   # "ppt.m01", "ppt.m02", "ppt.m03", "ppt.m04", "ppt.m05", "ppt.m06", "ppt.m07", "ppt.m08", "ppt.m09", "ppt.m10", "ppt.m11", "ppt.m12", 
   # "temp.m01", "temp.m02", "temp.m03", "temp.m04", "temp.m05", "temp.m06", "temp.m07", "temp.m08", "temp.m09", "temp.m10", "temp.m11", "temp.m12", 
-  "Elev_m", "DRNAREA_mi2", 
+  "Elev_m", 
   "MeanSnowPersistence_10", "MeanSnowPersistence_05", "MeanSnowPersistence_01", 
   "SnowDom_SP10", "SnowDom_SP05", "SnowDom_SP01",
   "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
@@ -60,7 +87,7 @@ pnw_df_all<-read_csv("NotForGit/Step1/pnw_df_step1.csv") %>%
          Region_DB="PNW",
          SiteCode=as.character(SiteCode))
 
-  
+
 pnw_df<-pnw_df_all %>%
   na.omit()
 
@@ -119,8 +146,8 @@ main_df2<-main_df %>%
 
 library(skimr)
 # main_df2 %>% 
-  # filter(ohwm_region %in% c("Northeast","Southeast")) %>%
-  # skim_without_charts()
+# filter(ohwm_region %in% c("Northeast","Southeast")) %>%
+# skim_without_charts()
 
 
 visit_tally<-main_df2 %>%
@@ -253,7 +280,7 @@ mod_summary<- xwalk_df %>%
     Stratification == "ohwm_region" & Strata %in% c("Northwest") & !IncludePNW~"OK",
     Stratification == "ohwm_region" & !Strata %in% c("Northwest") & IncludePNW~"Delete",
     Stratification == "ohwm_region" & !Strata %in% c("Northwest") & !IncludePNW~"OK",
-    )) %>%
+  )) %>%
   filter(FlagNoPNW != "Delete")
 
 pnw_sites <-xwalk_df$sitecode[which(xwalk_df$beta_region=="PNW")]
@@ -271,7 +298,7 @@ mod_dats<-lapply(1:nrow(mod_summary), function(i){
     main_df3.i
   else
     main_df3.i %>% filter(!SiteCode %in% pnw_sites )
-  })
+})
 
 
 set.seed(2)
@@ -345,9 +372,9 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
   
   set.seed(200+i)
   rf.i=randomForest(Class~., 
-               data=mydat, 
-               importance=T,
-               proximity=T)
+                    data=mydat, 
+                    importance=T,
+                    proximity=T)
   if(!gis.i)
     rf.i
   else
@@ -359,9 +386,9 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
       slice_max(MeanDecreaseAccuracy, n=2)
     set.seed(300+i)
     randomForest(Class~., 
-                      data=mydat %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
-                      importance=T,
-                      proximity=T)
+                 data=mydat %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
+                 importance=T,
+                 proximity=T)
   }
   
 })
@@ -412,9 +439,9 @@ met_colors_df<-imp_plot_dat %>%
                                  
   ))
 variable_importance_plot_pnw<-ggplot(imp_plot_dat %>% 
-                                   group_by(Regionalization, Region_id, GIS) %>%
-                                   slice_max(PNWtf, n=1), 
-                                 aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+                                       group_by(Regionalization, Region_id, GIS) %>%
+                                       slice_max(PNWtf, n=1), 
+                                     aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
   geom_tile(color="white")+
   scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
   # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
@@ -427,9 +454,9 @@ variable_importance_plot_pnw<-ggplot(imp_plot_dat %>%
 
 ggsave(variable_importance_plot_pnw, filename="Figures/variable_importance_plot_pnw.png", height=15, width=9)
 variable_importance_plot_xpnw<-ggplot(imp_plot_dat %>% 
-                                       group_by(Regionalization, Region_id, GIS) %>%
-                                       slice_min(PNWtf, n=1), 
-                                     aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+                                        group_by(Regionalization, Region_id, GIS) %>%
+                                        slice_min(PNWtf, n=1), 
+                                      aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
   geom_tile(color="white")+
   scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
   # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
@@ -720,9 +747,9 @@ mod_summary_long<-mod_summary %>%
 
 
 all_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
-         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
-         slice_max(IncludePNW, n=1), 
-       aes(x=Strata, y=value))+
+                                      group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+                                      slice_max(IncludePNW, n=1), 
+                                    aes(x=Strata, y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   scale_size_manual(values=c(1,2))+
   facet_grid(Metric~Stratification, scales="free_x", space="free")+
@@ -806,11 +833,11 @@ mod_summary %>%
   filter(is.na(Accuracy_EnotP_testing)) %>% as.data.frame()
 
 accuracy_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
-         filter(MetricType2=="Accuracy") %>%
-         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
-         slice_max(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
-         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
-       aes(x=Strata, y=value))+
+                                           filter(MetricType2=="Accuracy") %>%
+                                           group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+                                           slice_max(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
+                                           mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+                                         aes(x=Strata, y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
                group_by(Stratification, IncludeGISPreds, SiteSet) %>%
@@ -828,11 +855,11 @@ accuracy_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
 ggsave(accuracy_performance_metrics_pnw, filename="Figures/accuracy_performance_metrics_pnw.png", height=7.5, width=9)
 
 accuracy_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
-                                           filter(MetricType2=="Accuracy") %>%
-                                           group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
-                                           slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
-                                           mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
-                                         aes(x=Strata, y=value))+
+                                            filter(MetricType2=="Accuracy") %>%
+                                            group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+                                            slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
+                                            mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+                                          aes(x=Strata, y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
                group_by(Stratification, IncludeGISPreds, SiteSet) %>%
@@ -850,11 +877,11 @@ accuracy_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
 ggsave(accuracy_performance_metrics_xpnw, filename="Figures/accuracy_performance_metrics_xpnw.png", height=7.5, width=9)
 
 precision_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
-         filter(MetricType2=="Precision") %>%
-         group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
-         slice_max(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
-         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
-       aes(x=Strata, y=value))+
+                                            filter(MetricType2=="Precision") %>%
+                                            group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+                                            slice_max(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
+                                            mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+                                          aes(x=Strata, y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
                filter(MetricType2=="Precision") %>%
@@ -872,11 +899,11 @@ precision_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
 ggsave(precision_performance_metrics_pnw, filename="Figures/precision_performance_metrics_pnw.png", height=6, width=9)
 
 precision_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
-                                            filter(MetricType2=="Precision") %>%
-                                            group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
-                                            slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
-                                            mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
-                                          aes(x=Strata, y=value))+
+                                             filter(MetricType2=="Precision") %>%
+                                             group_by(Stratification, Strata, IncludeGISPreds, SiteSet) %>%
+                                             slice_min(IncludePNW, n=1) %>% #Selecting the max only shows models that included PNW. Use slice_min() for models that exclude PNW data
+                                             mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+                                           aes(x=Strata, y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds, shape=IncludePNW, group=IncludePNW), position=position_dodge(width=.5))+ 
   geom_hline(data=mod_summary_long_across_strata %>%
                filter(MetricType2=="Precision") %>%
@@ -1191,11 +1218,11 @@ mod_summary_assessment_strata_long %>%
            SiteSet=="Training")
 
 subpop_accuracy_plot_pnw<-ggplot(data=mod_summary_assessment_strata_long %>%
-         filter(MetricType2=="Accuracy") %>%
-         group_by(Stratification, AssessmentStratum, IncludeGISPreds, SiteSet) %>% 
-           slice_max(IncludePNW, n=1) %>% 
-         mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
-       aes(x=AssessmentStratum , y=value))+
+                                   filter(MetricType2=="Accuracy") %>%
+                                   group_by(Stratification, AssessmentStratum, IncludeGISPreds, SiteSet) %>% 
+                                   slice_max(IncludePNW, n=1) %>% 
+                                   mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+                                 aes(x=AssessmentStratum , y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
   # geom_hline(data=mod_summary_long_across_strata %>%
   #              filter(MetricType2=="Accuracy") %>%
@@ -1212,11 +1239,11 @@ subpop_accuracy_plot_pnw<-ggplot(data=mod_summary_assessment_strata_long %>%
 ggsave(subpop_accuracy_plot_pnw, filename="Figures/subpop_accuracy_plot_pnw.png", height=6, width=7.5)
 
 subpop_accuracy_plot_xpnw<-ggplot(data=mod_summary_assessment_strata_long %>%
-                                   filter(MetricType2=="Accuracy") %>%
-                                   group_by(Stratification, AssessmentStratum, IncludeGISPreds, SiteSet) %>% 
-                                   slice_min(IncludePNW, n=1) %>% 
-                                   mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
-                                 aes(x=AssessmentStratum , y=value))+
+                                    filter(MetricType2=="Accuracy") %>%
+                                    group_by(Stratification, AssessmentStratum, IncludeGISPreds, SiteSet) %>% 
+                                    slice_min(IncludePNW, n=1) %>% 
+                                    mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+                                  aes(x=AssessmentStratum , y=value))+
   geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
   # geom_hline(data=mod_summary_long_across_strata %>%
   #              filter(MetricType2=="Accuracy") %>%
