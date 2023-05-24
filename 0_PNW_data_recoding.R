@@ -53,6 +53,7 @@ pnw_df<-pnw_df_raw%>%
                                            T~as.numeric(SI_amph)),
             Fish_PA=case_when(SI_fish=="VNA"~NA_real_, #We sometimes assume absent if not reported
                               T~as.numeric(SI_fish)),
+            Fish_UpTo3 = case_when(Fish=="VNA"~NA_real_, T~as.numeric(Fish)),
             BMI_presence=case_when(SI_macro=="VNA"~NA_real_, #We sometimes assume absent if not reported
                                    T~as.numeric(SI_fish)),
             Ephemeroptera_SumOfIndividuals=case_when(Ephem=="VNA"~NA_real_,

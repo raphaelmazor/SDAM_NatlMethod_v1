@@ -43,15 +43,17 @@ BioPreds_WGE<-c(
   # "Crayfish_abundance", "Crayfish_taxa", 
   "Mollusk_abundance",  "Mollusk_taxa", 
   "TolRelAbundAlt","TolTaxaAlt",
-  
   #Vegetation
+  "hydrophytes_present","hydrophytes_present_noflag"
   )
 
 
 
 #HYDROLOGIC INDICATORS
 HydroPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore","HydricSoils_score")
-WaterPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore")
+HydroPreds_East<-c("LeafLitter_score","SeepsSprings_inchannel","ODL_score")
+HydroPreds_WGP<-c("WoodyJams_number")
+WaterPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore","SeepsSprings_inchannel")
 HydroPreds_Indirect_PNW<-setdiff(HydroPreds_PNW, WaterPreds_PNW)
 
 #GEOMORPH INDICATORS
@@ -59,6 +61,13 @@ GeomorphPreds_PNW<-c(
   "SubstrateSorting_score","Sinuosity_score",  "RifflePoolSeq_score",
   "BankWidthMean","Slope"#"erosion_score","floodplain_score"
 )
+
+GeomorphPreds_East<-c(
+  "Continuity_score","Depositional_score","AlluvialDep_score","Headcut_score",
+  "GradeControl_score","NaturalValley_score","ActiveFloodplain_score"
+)
+
+GemorphPreds_WGP<-c("Sinuosity_score","ChannelDimensions_score_NM")
 #GIS Predictors
 #These predictors are applicable to the entire data set, regarldess of data collection SOP
 GISPreds<-c(#"Eco1","Eco2","Eco3",
@@ -66,7 +75,7 @@ GISPreds<-c(#"Eco1","Eco2","Eco3",
   "ppt", 
   # "ppt.m01", "ppt.m02", "ppt.m03", "ppt.m04", "ppt.m05", "ppt.m06", "ppt.m07", "ppt.m08", "ppt.m09", "ppt.m10", "ppt.m11", "ppt.m12", 
   # "temp.m01", "temp.m02", "temp.m03", "temp.m04", "temp.m05", "temp.m06", "temp.m07", "temp.m08", "temp.m09", "temp.m10", "temp.m11", "temp.m12", 
-  "Elev_m", 
+  "Elev_m",  "DRNAREA_mi2", 
   "MeanSnowPersistence_10", "MeanSnowPersistence_05", "MeanSnowPersistence_01", 
   "SnowDom_SP10", "SnowDom_SP05", "SnowDom_SP01",
   "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
@@ -159,7 +168,7 @@ visit_tally_plot<-ggplot(data=visit_tally, aes(x=n, fill=Class))+
   scale_x_continuous(breaks=c(0:12))+
   scale_fill_brewer(palette="RdYlBu")+
   theme_bw()+xlab("# visits")
-ggsave(visit_tally_plot, filename="Figures/visit_tally_plot.png", height=6, width=6)
+ggsave(visit_tally_plot, filename="Figures_VaryingPredictors/visit_tally_plot.png", height=6, width=6)
 
 visit_tally_plot_regions<-ggplot(data=visit_tally, aes(x=n, fill=Class))+
   geom_histogram(color="black")+
@@ -167,7 +176,7 @@ visit_tally_plot_regions<-ggplot(data=visit_tally, aes(x=n, fill=Class))+
   scale_fill_brewer(palette="RdYlBu")+
   theme_bw()+xlab("# visits")+
   facet_wrap(~Region_DB, ncol=1)
-ggsave(visit_tally_plot_regions, filename="Figures/visit_tally_plot_regions.png", height=6, width=6)
+ggsave(visit_tally_plot_regions, filename="Figures_VaryingPredictors/visit_tally_plot_regions.png", height=6, width=6)
 
 ####Upsample to 6 per site
 visit_tally$AtLeast6Samples<-visit_tally$n>=6
@@ -254,10 +263,11 @@ mod_summary<- xwalk_df %>%
                names_to = "Stratification", values_to = "Strata") %>%
   crossing(IncludeGISPreds=c(T,F),
            IncludePNW=c(T,F)) %>%
-  mutate(ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
+  mutate(Stratf_Strat=paste(Stratification, Strata, sep="_"),
+    ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
                              IncludeGISPreds & !IncludePNW~paste(Stratification, Strata, "GIS", sep="_"),
                              !IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW", sep="_"),
-                             T~paste(Stratification, Strata))) %>%
+                             T~paste(Stratification, Strata, sep="_"))) %>%
   mutate(FlagNoPNW = case_when(
     Stratification == "all_region"~"OK",
     
@@ -298,6 +308,11 @@ mod_dats<-lapply(1:nrow(mod_summary), function(i){
     main_df3.i
   else
     main_df3.i %>% filter(!SiteCode %in% pnw_sites )
+  if(stratf.i=="all_region")
+    main_df3.i %>%
+    inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region))
+  else
+    main_df3.i
 })
 
 
@@ -362,14 +377,22 @@ mod_summary$n_testing_E<-sapply(mod_dats_split, function(x){
 
 library(randomForest)
 my_rfs<-lapply(1:nrow(mod_summary), function(i){
+  stratf.i=mod_summary$Stratification[i]
   gis.i = mod_summary$IncludeGISPreds[i]
   print(paste(i, mod_summary$ModName[i]))
   
-  if(gis.i)
-    mydat= mod_dats_training[[i]] %>%  select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)))
+  if(gis.i) #UPDATE TO CONDITIONALLY INCLUDE MLRA
+    mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)))
   else
-    mydat= mod_dats_training[[i]] %>%  select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW)))
+    mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW)))
   
+  if(stratf.i=="all_region" & gis.i)
+    mydat = mydat %>% 
+    inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region)) %>%
+    select(-SiteCode)
+  else
+    mydat = mydat %>%    select(-SiteCode)
+  print("DRNAREA_mi2" %in% names(mydat))
   set.seed(200+i)
   rf.i=randomForest(Class~., 
                     data=mydat, 
@@ -452,7 +475,7 @@ variable_importance_plot_pnw<-ggplot(imp_plot_dat %>%
   ggtitle("Variable importance", subtitle =  "Includes PNW data")+
   xlab("")+ylab("")
 
-ggsave(variable_importance_plot_pnw, filename="Figures/variable_importance_plot_pnw.png", height=15, width=9)
+ggsave(variable_importance_plot_pnw, filename="Figures_VaryingPredictors/variable_importance_plot_pnw.png", height=15, width=9)
 variable_importance_plot_xpnw<-ggplot(imp_plot_dat %>% 
                                         group_by(Regionalization, Region_id, GIS) %>%
                                         slice_min(PNWtf, n=1), 
@@ -467,7 +490,7 @@ variable_importance_plot_xpnw<-ggplot(imp_plot_dat %>%
   ggtitle("Variable importance", subtitle =  "Excludes PNW data")+
   xlab("")+ylab("")
 
-ggsave(variable_importance_plot_xpnw, filename="Figures/variable_importance_plot_xpnw.png", height=15, width=9)
+ggsave(variable_importance_plot_xpnw, filename="Figures_VaryingPredictors/variable_importance_plot_xpnw.png", height=15, width=9)
 
 
 ####################
@@ -580,7 +603,7 @@ outcomes_plot<-  ggplot(data=outcomes_plot_dat, aes(x=ModName, y=value))+
   scale_fill_manual(values=c("#08519c","#6baed6","#8856a7","#f768a1","orange"))+
   coord_flip()+
   xlab("")+ylab("% of samples")
-ggsave(outcomes_plot, filename="Figures/outcomes_plot.png", height=8, width=6)
+ggsave(outcomes_plot, filename="Figures_VaryingPredictors/outcomes_plot.png", height=8, width=6)
 
 
 mod_summary$Accuracy_PvIvE_training<-sapply(1:nrow(mod_summary), function(i){
@@ -758,7 +781,7 @@ all_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Performance")+xlab("")
-ggsave(all_performance_metrics_pnw, filename="Figures/all_performance_metrics_pnw.png", height=7.5, width=13)
+ggsave(all_performance_metrics_pnw, filename="Figures_VaryingPredictors/all_performance_metrics_pnw.png", height=7.5, width=13)
 # 
 # accuracy_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
 #          filter(MetricType2=="Accuracy") %>%
@@ -773,7 +796,7 @@ ggsave(all_performance_metrics_pnw, filename="Figures/all_performance_metrics_pn
 #   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
 #   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
 #   ylab("Accuracy")+xlab("")
-# ggsave(accuracy_performance_metrics_pnw, filename="Figures/accuracy_performance_metrics_pnw.png", height=7.5, width=9)
+# ggsave(accuracy_performance_metrics_pnw, filename="Figures_VaryingPredictors/accuracy_performance_metrics_pnw.png", height=7.5, width=9)
 # 
 # accuracy_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
 #                                            filter(MetricType2=="Accuracy") %>%
@@ -788,7 +811,7 @@ ggsave(all_performance_metrics_pnw, filename="Figures/all_performance_metrics_pn
 #   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
 #   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
 #   ylab("Accuracy")+xlab("")
-# ggsave(accuracy_performance_metrics_xpnw, filename="Figures/accuracy_performance_metrics_xpnw.png", height=7.5, width=9)
+# ggsave(accuracy_performance_metrics_xpnw, filename="Figures_VaryingPredictors/accuracy_performance_metrics_xpnw.png", height=7.5, width=9)
 # 
 # 
 # precision_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
@@ -804,7 +827,7 @@ ggsave(all_performance_metrics_pnw, filename="Figures/all_performance_metrics_pn
 #   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
 #   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
 #   ylab("Precision")+xlab("")
-# ggsave(precision_performance_metrics_pnw, filename="Figures/precision_performance_metrics_pnw.png", height=5, width=9)
+# ggsave(precision_performance_metrics_pnw, filename="Figures_VaryingPredictors/precision_performance_metrics_pnw.png", height=5, width=9)
 # 
 # precision_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
 #                                             filter(MetricType2=="Precision") %>%
@@ -819,7 +842,7 @@ ggsave(all_performance_metrics_pnw, filename="Figures/all_performance_metrics_pn
 #   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
 #   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
 #   ylab("Precision")+xlab("")
-# ggsave(precision_performance_metrics_xpnw, filename="Figures/precision_performance_metrics_xpnw.png", height=5, width=9)
+# ggsave(precision_performance_metrics_xpnw, filename="Figures_VaryingPredictors/precision_performance_metrics_xpnw.png", height=5, width=9)
 
 
 mod_summary_long_across_strata<-mod_summary_long %>%
@@ -852,7 +875,7 @@ accuracy_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Accuracy")+xlab("")
-ggsave(accuracy_performance_metrics_pnw, filename="Figures/accuracy_performance_metrics_pnw.png", height=7.5, width=9)
+ggsave(accuracy_performance_metrics_pnw, filename="Figures_VaryingPredictors/accuracy_performance_metrics_pnw.png", height=7.5, width=9)
 
 accuracy_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
                                             filter(MetricType2=="Accuracy") %>%
@@ -874,7 +897,7 @@ accuracy_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Accuracy")+xlab("")
-ggsave(accuracy_performance_metrics_xpnw, filename="Figures/accuracy_performance_metrics_xpnw.png", height=7.5, width=9)
+ggsave(accuracy_performance_metrics_xpnw, filename="Figures_VaryingPredictors/accuracy_performance_metrics_xpnw.png", height=7.5, width=9)
 
 precision_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
                                             filter(MetricType2=="Precision") %>%
@@ -896,7 +919,7 @@ precision_performance_metrics_pnw<-ggplot(data=mod_summary_long %>%
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Precision")+xlab("")
-ggsave(precision_performance_metrics_pnw, filename="Figures/precision_performance_metrics_pnw.png", height=6, width=9)
+ggsave(precision_performance_metrics_pnw, filename="Figures_VaryingPredictors/precision_performance_metrics_pnw.png", height=6, width=9)
 
 precision_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
                                              filter(MetricType2=="Precision") %>%
@@ -918,7 +941,7 @@ precision_performance_metrics_xpnw<-ggplot(data=mod_summary_long %>%
   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Precision")+xlab("")
-ggsave(precision_performance_metrics_xpnw, filename="Figures/precision_performance_metrics_xpnw.png", height=6, width=9)
+ggsave(precision_performance_metrics_xpnw, filename="Figures_VaryingPredictors/precision_performance_metrics_xpnw.png", height=6, width=9)
 
 
 mod_summary_long %>%
@@ -963,7 +986,7 @@ usace_divisions_map_sites<-ggplot()+
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         panel.border = element_blank())
-ggsave(usace_divisions_map_sites, filename="Figures/usace_divisions_map_sites.png", height=4, width=5)
+ggsave(usace_divisions_map_sites, filename="Figures_VaryingPredictors/usace_divisions_map_sites.png", height=4, width=5)
 
 xwalk_df2<-xwalk_sf %>%
   as_tibble() %>%
@@ -1236,7 +1259,7 @@ subpop_accuracy_plot_pnw<-ggplot(data=mod_summary_assessment_strata_long %>%
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Accuracy")+xlab("")+
   scale_y_continuous(limits=c(.5,1))
-ggsave(subpop_accuracy_plot_pnw, filename="Figures/subpop_accuracy_plot_pnw.png", height=6, width=7.5)
+ggsave(subpop_accuracy_plot_pnw, filename="Figures_VaryingPredictors/subpop_accuracy_plot_pnw.png", height=6, width=7.5)
 
 subpop_accuracy_plot_xpnw<-ggplot(data=mod_summary_assessment_strata_long %>%
                                     filter(MetricType2=="Accuracy") %>%
@@ -1257,7 +1280,7 @@ subpop_accuracy_plot_xpnw<-ggplot(data=mod_summary_assessment_strata_long %>%
   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
   ylab("Accuracy")+xlab("")+
   scale_y_continuous(limits=c(.5,1))
-ggsave(subpop_accuracy_plot_xpnw, filename="Figures/subpop_accuracy_plot_xpnw.png", height=6, width=7.5)
+ggsave(subpop_accuracy_plot_xpnw, filename="Figures_VaryingPredictors/subpop_accuracy_plot_xpnw.png", height=6, width=7.5)
 
 subpop_accuracy_plot_diffpnw<-mod_summary_assessment_strata_long %>%
   mutate(ModelData = case_when(IncludePNW ~"Includes_PNW", T~"Excludes_PNW")) %>%
@@ -1275,4 +1298,4 @@ subpop_accuracy_plot_diffpnw<-mod_summary_assessment_strata_long %>%
   ylab("Differences in Accuracy\n(With minus Without PNW)")+xlab("")+
   geom_hline(yintercept=0)+
   scale_y_continuous(breaks=(seq(from=-.8, to=.4, by=.1)))
-ggsave(subpop_accuracy_plot_diffpnw, filename="Figures/subpop_accuracy_plot_diffpnw.png", height=6, width=7.5)
+ggsave(subpop_accuracy_plot_diffpnw, filename="Figures_VaryingPredictors/subpop_accuracy_plot_diffpnw.png", height=6, width=7.5)

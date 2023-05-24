@@ -213,6 +213,12 @@ main_df<-   main_raw %>%
     FibrousRootedPlants_notes= fibrous_rootnotes, # Actually, fibrous roots for NESE in ununified database
     
     number_of_fish,#NESE
+    Fish_UpTo3=case_when(number_of_fish =="0"~0,
+                         number_of_fish =="1"~1,
+                         number_of_fish =="2"~2,
+                         number_of_fish =="3"~3,
+                         number_of_fish ==">3"~3,
+                         T~NA_real_),
     Mosquitofish = case_when(is.na(mosquitofish) & is.na(all_mosqfish)~"no",
                              mosquitofish=="yes" | all_mosqfish=="yes"~"yes",
                              T~"no"),
@@ -232,6 +238,7 @@ main_df<-   main_raw %>%
                         is.na(Fish_score_NM) & is.na(number_of_fish)~0,
                         T~0), #Both East and Other regions
     Fish_PA_nomosq = (Fish_PA*(Mosquitofish=="no")), #Both East and Other regions
+    Fish_UpTo3_nomosq = (Fish_UpTo3*(Mosquitofish=="no")), 
     BMI_score= abundancescorebenthic,# Not recorded for NESE
     BMI_presence = case_when(BMI_score>0~1,T~0),
     Algae_score= case_when(abundancealgae=="Not recorded"~NA_real_,
