@@ -106,12 +106,37 @@ pnw_df<-pnw_df_all %>%
 #   filter(is.na(tmin)) %>%
 #   select(all_of(all_metrics_PNW)) %>%
 #   skim_without_charts()
-
+xwalk_df<-read_csv("NotForGit/Step1/xwalk_df.csv")
 main_df <- main_df_nopnw %>%
   bind_rows(pnw_df) %>%
   inner_join(gis_metrics_df) %>%
   inner_join(xwalk_df %>%
                select(SiteCode=sitecode, DRNAREA_mi2))
+
+
+
+
+lumets<-read_csv("Data/metric_lookup.csv")
+
+junk<-lumets #%>%  filter(MetricType!="Geospatial")
+
+setdiff(junk$Metric, names(main_df))
+
+main_long<-main_df %>%
+  select(Region_DB, all_of(junk$Metric)) %>%
+  pivot_longer(cols=all_of(junk$Metric))
+main_long %>%
+  group_by(Region_DB, name) %>%
+  summarise(n_tot = length(value),
+            length_not_na = sum(!is.na(value))) %>%
+  ungroup() %>%
+  mutate(pct_complete = length_not_na/n_tot) %>%
+  select(-n_tot, -length_not_na) %>%
+  mutate(Region_DB=paste0(Region_DB,"_Complete")) %>%
+  pivot_wider(names_from=Region_DB, values_from = pct_complete) %>%
+  rename(Metric=name)%>%
+  right_join(junk) %>%
+  write_clip()
 
 
 # main_df %>% skim_without_charts()

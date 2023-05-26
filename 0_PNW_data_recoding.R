@@ -115,7 +115,10 @@ pnw_df<-pnw_df_raw%>%
                                          GW %in% c("2","3")~2),
             HydricSoils_score=case_when(Redox=="VNA"~NA_real_,
                                         Redox=="0"~0,
-                                        Redox=="1.5"~3)
+                                        Redox=="1.5"~3),
+            AmphSnake_PA = case_when(Amph_M09=="VNA"~NA_real_,
+                                     Amph_M09 %in% c("0")~0,
+                                     Amph_M09 %in% c("0.5","1","1.5")~1,)
             
   )
 
@@ -125,7 +128,7 @@ pnw_df %>% select(contains("moss"))  %>%
 pnw_df %>%
   na.omit() %>%
   select(SiteCode) %>% unique() 
-  skim_without_charts()
+  # skim_without_charts()
 
 # gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
 # setdiff(pnw_df$SiteCode, gis_metrics_df$SiteCode)
@@ -155,4 +158,23 @@ pnw_df %>%
   unique() %>%
   group_by(Class) %>%
   tally()
+##########
+lumets<-read_csv("Data/metric_lookup.csv")
+
+junk<-lumets %>%  filter(MetricType!="Geospatial")
+pnw_long<-pnw_df %>%
+  transmute(Region_DB="PNW", all_of(junk$Metric)) %>%
+  pivot_longer(cols=all_of(junk$Metric))
+main_long %>%
+  group_by(Region_DB, name) %>%
+  summarise(n_tot = length(value),
+            length_not_na = sum(!is.na(value))) %>%
+  ungroup() %>%
+  mutate(pct_complete = length_not_na/n_tot) %>%
+  select(-n_tot, -length_not_na) %>%
+  mutate(Region_DB=paste0(Region_DB,"_Complete")) %>%
+  pivot_wider(names_from=Region_DB, values_from = pct_complete) %>%
+  rename(Metric=name)%>%
+  right_join(junk) %>%
+  write_clip()
 

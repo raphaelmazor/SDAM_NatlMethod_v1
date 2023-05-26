@@ -164,7 +164,9 @@ main_df<-   main_raw %>%
     MaxPoolDepth_calc = max_pool_depth_calc, # NESE only
     MaxPoolDepth = max_pool_depth,# NESE only
     SeepsSprings_yn=hi_seepsspring,# All regions
-    SeepsSprings_inchannel = inchannel,# NESE only
+    SeepsSprings_inchannel = case_when(inchannel=="yes"~1,
+                                       inchannel %in% c("na","no")~0,
+                                       is.na(inchannel)~NA_real_),# NESE only
     springs_score_NM = case_when(SeepsSprings_yn=="present"~1.5,T~0),
     baseflowscore,# NESE only
     baseflow_notes,#NESE
@@ -258,7 +260,7 @@ main_df<-   main_raw %>%
                                    ironox_bfscore_NM==0~0,
                                    T~NA_real_),
     ironox_bfnotes,#NESE
-    Snakes_yn= observedsnakes, # Not recorded for NESE
+    Snakes_yn= case_when(is.na(observedsnakes)~"notdetected", T~observedsnakes), # Not recorded for NESE
     # Snakes_abundance= obsnakesabundance, # Not recorded for NESE
     
     Turtles_yn= observedturtles, # Not recorded for NESE
@@ -472,17 +474,39 @@ amphib_mets<-amphib_df %>%
             Amphib_Juvenile_abundance = sum(Amphib_Abundance[Amphib_LifeStage!="A"], na.rm=T),
             Salamander_Juvenile_abundance = sum(Amphib_Abundance[Salamander & Amphib_LifeStage %in% c("L","J")], na.rm=T),
             Multiyear_tadpole_abundance = sum(Amphib_Abundance[Multiyear_Tadpole & Amphib_LifeStage=="L"], na.rm=T)
-  )
-# amphib_mets %>% skim_without_charts()
+  ) %>%
+  right_join(main_df %>%
+               filter(Region_DB=="East") %>%
+               select(ParentGlobalID)) %>%
+  mutate(Amphib_richness=case_when(is.na(Amphib_richness)~0,T~Amphib_richness),
+         Amphib_abundance=case_when(is.na(Amphib_abundance)~0,T~Amphib_abundance),
+         Frog_richness=case_when(is.na(Frog_richness)~0,T~Frog_richness),
+         Frog_abundance=case_when(is.na(Frog_abundance)~0,T~Frog_abundance),
+         Salamander_richness=case_when(is.na(Salamander_richness)~0,T~Salamander_richness),
+         Salamander_abundance=case_when(is.na(Salamander_abundance)~0,T~Salamander_abundance),
+         Amphib_Juvenile_richness=case_when(is.na(Amphib_Juvenile_richness)~0,T~Amphib_Juvenile_richness),
+         Amphib_Juvenile_abundance=case_when(is.na(Amphib_Juvenile_abundance)~0,T~Amphib_Juvenile_abundance),
+         Salamander_Juvenile_abundance=case_when(is.na(Salamander_Juvenile_abundance)~0,T~Salamander_Juvenile_abundance),
+         Multiyear_tadpole_abundance=case_when(is.na(Multiyear_tadpole_abundance)~0,T~Multiyear_tadpole_abundance))
+  
+
+amphib_mets %>% skim_without_charts()
 main_df<-main_df %>%
   left_join(amphib_mets %>% transmute(ParentGlobalID, 
-                                      Amphib_count=Amphib_abundance)) %>%
+                                      Amphib_count=Amphib_abundance,
+                                      Amphib_abundance,
+                                      Amphib_richness, Frog_richness,Frog_abundance,Multiyear_tadpole_abundance)) %>%
   mutate(Amphibians_yn = case_when(Amphibians_yn=="present"~"present",
                                    Amphib_count>0~"present",
                                    Amphibians_yn %in% c("notdetected","notdectected")~"notdetected",
                                    Amphib_count==0~"notdetected",
                                    is.na(Amphib_count) & is.na(Amphibians_yn)~"notdetected",
-                                   T~"OTHER")) %>%
+                                   T~"OTHER"),
+         AmphSnake_PA = case_when(Amphibians_yn=="present"~1,
+                                  Snakes_yn=="present"~1,
+                                  is.na(Snakes_yn) & is.na(Amphibians_yn)~0,
+                                  Snakes_yn %in% c("notdetected","notdectected") & Amphibians_yn %in% c("notdetected","notdectected")~0)
+         ) %>%
   #Get rid of interim metrics
   select(-Amphib_count) %>%
   mutate(Amphibian_presence = case_when(Amphibians_yn=="present"~1,
@@ -552,9 +576,10 @@ veg_metrics<-hydroveg_df %>%
   ungroup()
 
 main_df<-main_df %>%
-  left_join(veg_metrics %>% select(ParentGlobalID, hydrophytes_present, hydrophytes_present_noflag, hydrophytes_present_any)) %>%
+  left_join(veg_metrics %>% select(ParentGlobalID, hydrophytes_present, hydrophytes_present_noflag, hydrophytes_present_any, hydrophytes_present_any_noflag)) %>%
   mutate(hydrophytes_present = case_when(is.na(hydrophytes_present)~0,T~hydrophytes_present),
          hydrophytes_present_any = case_when(is.na(hydrophytes_present_any)~0,T~hydrophytes_present_any),
+         hydrophytes_present_any_noflag = case_when(is.na(hydrophytes_present_any_noflag)~0,T~hydrophytes_present_any_noflag),
          hydrophytes_present_noflag = case_when(is.na(hydrophytes_present_noflag)~0,T~hydrophytes_present_noflag))
 
 
@@ -656,6 +681,24 @@ main_df<-main_df %>%
 
 #################
 
+lumets<-read_csv("Data/metric_lookup.csv")
+
+junk<-lumets #%>%  filter(MetricType!="Geospatial")
+main_long<-main_df %>%
+  select(Region_DB, all_of(junk$Metric)) %>%
+  pivot_longer(cols=all_of(junk$Metric))
+main_long %>%
+  group_by(Region_DB, name) %>%
+  summarise(n_tot = length(value),
+            length_not_na = sum(!is.na(value))) %>%
+  ungroup() %>%
+  mutate(pct_complete = length_not_na/n_tot) %>%
+  select(-n_tot, -length_not_na) %>%
+  mutate(Region_DB=paste0(Region_DB,"_Complete")) %>%
+  pivot_wider(names_from=Region_DB, values_from = pct_complete) %>%
+  rename(Metric=name)%>%
+  right_join(junk) %>%
+   write_clip()
 
 
 
