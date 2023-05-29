@@ -7,84 +7,9 @@ library(clipr)
 #WGE: Appropriate for West, GP and East, but not PNW
 #WG: Appropriate for West and GP, but not East or PNW
 
-#BIOLOGICAL PREDICTORS
-BioPreds_PNW<-c(
-  #Aquatic invertebrates
-  "BMI_presence",
-  "Ephemeroptera_SumOfIndividuals","Plecoptera_SumOfIndividuals","Trichoptera_SumOfIndividuals",
-  "Basommatophora_SumOfIndividuals","Odonata_SumOfIndividuals","Coleoptera_SumOfIndividuals",
-  "Hemiptera_SumOfIndividuals","Decapoda_SumOfIndividuals","OtherMacro_SumOfIndividuals",
-  "EPT_SumOfIndividuals","OCH_SumOfIndividuals","MacroGroupsPresent","PerennialPNWMacroPresent",
-  #Vegetation
-  "hydrophytes_present_any","UplandRootedPlants_score2","RiparianCorridor_score",
-  #algae
-  
-  #Fish
-  "Fish_PA",
-  #Other bio
-  "ironox_bfscore_PNW","Amphibian_presence","AlgaeAbundanceMossCover_Score2")
-####
-BioPreds_WGE<-c(
-  
-  #Aquatic insects
-  "TotalAbundance", "Richness", 
-  "perennial_PNW_abundance", "perennial_PNW_taxa","perennial_PNW_live_abundance",
-  "perennial_NC_abundance", "perennial_NC_taxa", "perennial_NC_live_abundance",
-  "Ephemeroptera_abundance", "EPT_abundance",  "EPT_taxa", #"EPT_relabd", "EPT_reltaxa", 
-  "Plecoptera_abundance", "Trichoptera_abundance", "Hemiptera_abundance", 
-  "Coleoptera_abundance", "Decapoda_abundance", "Odonata_abundance", 
-  # "Basommatophora_abundance", 
-  "OtherMacro_abundance", 
-  "GOLD_abundance", "GOLD_taxa", #"GOLD_relabd", "GOLD_reltaxa",
-  "OCH_abundance", "OCH_taxa",#"OCH_relabd", "OCH_reltaxa",
-  # "GOLDOCH_relabd", "GOLDOCH_reltaxa",
-  "Noninsect_abundance", "Noninsect_taxa", 
-  "Noninsect_relabund", "Noninsect_reltaxa", 
-  # "Crayfish_abundance", "Crayfish_taxa", 
-  "Mollusk_abundance",  "Mollusk_taxa", 
-  "TolRelAbundAlt","TolTaxaAlt",
-  #Vegetation
-  "hydrophytes_present","hydrophytes_present_noflag"
-  )
 
 
-
-#HYDROLOGIC INDICATORS
-HydroPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore","HydricSoils_score")
-HydroPreds_East<-c("LeafLitter_score","SeepsSprings_inchannel","ODL_score")
-HydroPreds_WGP<-c("WoodyJams_number")
-WaterPreds_PNW<-c("springs_score_NM","SoilMoist_MaxScore","SeepsSprings_inchannel")
-HydroPreds_Indirect_PNW<-setdiff(HydroPreds_PNW, WaterPreds_PNW)
-
-#GEOMORPH INDICATORS
-GeomorphPreds_PNW<-c(
-  "SubstrateSorting_score","Sinuosity_score",  "RifflePoolSeq_score",
-  "BankWidthMean","Slope"#"erosion_score","floodplain_score"
-)
-
-GeomorphPreds_East<-c(
-  "Continuity_score","Depositional_score","AlluvialDep_score","Headcut_score",
-  "GradeControl_score","NaturalValley_score","ActiveFloodplain_score"
-)
-
-GemorphPreds_WGP<-c("Sinuosity_score","ChannelDimensions_score_NM")
-#GIS Predictors
-#These predictors are applicable to the entire data set, regarldess of data collection SOP
-GISPreds<-c(#"Eco1","Eco2","Eco3",
-  "tmean", "tmax", "tmin", 
-  "ppt", 
-  # "ppt.m01", "ppt.m02", "ppt.m03", "ppt.m04", "ppt.m05", "ppt.m06", "ppt.m07", "ppt.m08", "ppt.m09", "ppt.m10", "ppt.m11", "ppt.m12", 
-  # "temp.m01", "temp.m02", "temp.m03", "temp.m04", "temp.m05", "temp.m06", "temp.m07", "temp.m08", "temp.m09", "temp.m10", "temp.m11", "temp.m12", 
-  "Elev_m",  "DRNAREA_mi2", 
-  "MeanSnowPersistence_10", "MeanSnowPersistence_05", "MeanSnowPersistence_01", 
-  "SnowDom_SP10", "SnowDom_SP05", "SnowDom_SP01",
-  "ppt.234", "ppt.567", "ppt.8910", "ppt.11121", 
-  "temp.234", "temp.567", "temp.8910", "temp.11121"
-)
-
-
-
-all_metrics_PNW<-c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)
+lumets<-read_csv("Data/metric_lookup.csv")
 
 #############Import data
 gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
@@ -99,6 +24,8 @@ pnw_df_all<-read_csv("NotForGit/Step1/pnw_df_step1.csv") %>%
 
 pnw_df<-pnw_df_all %>%
   na.omit()
+# skim_without_charts()
+# filter(!is.na())
 
 # main_df_nopnw %>%
 #   bind_rows(pnw_df) %>%
@@ -116,28 +43,119 @@ main_df <- main_df_nopnw %>%
 
 
 
-lumets<-read_csv("Data/metric_lookup.csv")
+lumets<-read_csv("Data/metric_lookup.csv") %>%
+  filter(MetricSubtype!="Direct")
+all_metrics<-lumets$Metric[which(lumets$MetricSubtype!="Direct")]
+gis_metrics<-lumets$Metric[which(lumets$MetricType=="Geospatial")]
+metrics_wg<-lumets$Metric[which(lumets$West & lumets$GP)] %>% as.vector()
+metrics_wgp<-lumets$Metric[which(lumets$West & lumets$GP & lumets$PNW)] %>% as.vector()
+metrics_wge<-lumets$Metric[which(lumets$West & lumets$GP & lumets$East)] %>% as.vector()
+metrics_wgep<-lumets$Metric[which(lumets$West & lumets$GP & lumets$East & lumets$PNW)] %>% as.vector()
+metrics_e<-lumets$Metric[which(lumets$East)] %>% as.vector()
+metrics_ep<-lumets$Metric[which(lumets$East & lumets$PNW)] %>% as.vector()#Not sure this is needed
+metrics_p<-lumets$Metric[which(lumets$PNW)] %>% as.vector() #Same as metrics_ep
+lumets %>% group_by(West, GP, East, PNW) %>% tally()
 
-junk<-lumets #%>%  filter(MetricType!="Geospatial")
+mod_summary<- xwalk_df %>% 
+  select(all_region,beta_region,ohwm_region,corps_region,nwca_region) %>%
+  pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region,nwca_region), 
+               names_to = "Stratification", values_to = "Strata") %>%
+  crossing(IncludeGISPreds=c(T,F),
+           IncludePNW=c(T,F)) %>%
+  mutate(Stratf_Strat=paste(Stratification, Strata, sep="_"),
+         ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
+                             IncludeGISPreds & !IncludePNW~paste(Stratification, Strata, "GIS", sep="_"),
+                             !IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW", sep="_"),
+                             T~paste(Stratification, Strata, sep="_"))) %>%
+  mutate(FlagNoPNW = case_when(
+    Stratification == "all_region"~"OK",
+    Strata=="Caribbean"~"Delete",
+    Strata=="CB"~"Delete",
+    
+    Stratification == "beta_region" & Strata %in% c("PNW") & IncludePNW~"OK",
+    Stratification == "beta_region" & Strata %in% c("PNW") & !IncludePNW~"Delete",
+    Stratification == "beta_region" & !Strata %in% c("PNW") & IncludePNW~"Delete",
+    Stratification == "beta_region" & !Strata %in% c("PNW") & !IncludePNW~"OK",
+    
+    Stratification == "corps_region" & Strata %in% c("AW","WMVC") & IncludePNW~"OK",
+    Stratification == "corps_region" & Strata %in% c("AW","WMVC") & !IncludePNW~"OK",
+    Stratification == "corps_region" & !Strata %in% c("AW","WMVC") & IncludePNW~"Delete",
+    Stratification == "corps_region" & !Strata %in% c("AW","WMVC") & !IncludePNW~"OK",
+    
+    Stratification == "nwca_region" & Strata %in% c("XER","WMT") & IncludePNW~"OK",
+    Stratification == "nwca_region" & Strata %in% c("XER","WMT") & !IncludePNW~"OK",
+    Stratification == "nwca_region" & !Strata %in% c("XER","WMT") & IncludePNW~"Delete",
+    Stratification == "nwca_region" & !Strata %in% c("XER","WMT") & !IncludePNW~"OK",
+    
+    Stratification == "ohwm_region" & Strata %in% c("Northwest") & IncludePNW~"OK",
+    Stratification == "ohwm_region" & Strata %in% c("Northwest") & !IncludePNW~"OK",
+    Stratification == "ohwm_region" & !Strata %in% c("Northwest") & IncludePNW~"Delete",
+    Stratification == "ohwm_region" & !Strata %in% c("Northwest") & !IncludePNW~"OK"
+    
+    
+  )) %>%
+  filter(FlagNoPNW != "Delete") %>%
+  mutate(RegionalDatasets = 
+           case_when(Stratification=="all_region" & IncludePNW~"WGEP",
+                     Stratification=="all_region" & !IncludePNW~"WGE",
+                     Stratf_Strat %in% c("beta_region_Arid West", "beta_region_Western Mountains") ~"W",
+                     Stratf_Strat %in% c("beta_region_Northeast", "beta_region_Southeast") ~"E",
+                     Stratf_Strat %in% c("beta_region_Northern Great Plains", "beta_region_Southern Great Plains") ~"G",
+                     Stratf_Strat %in% c("beta_region_PNW") ~"P",
+                     Stratf_Strat %in% c("corps_region_AGCP") ~"E", #There are two sites in Texas GP, so it's not worth dropping the data
+                     Stratf_Strat %in% c("corps_region_AW") & IncludePNW ~"WP", 
+                     Stratf_Strat %in% c("corps_region_AW") & !IncludePNW ~"W",
+                     Stratf_Strat %in% c("corps_region_EMP")  ~"E", 
+                     Stratf_Strat %in% c("corps_region_GP")  ~"GE", #There are 22 eastern sites, so keep. There is 1 WM site, so drop
+                     Stratf_Strat %in% c("corps_region_MW") ~"GE", #9 NE sites vs 41 NGP sites
+                     Stratf_Strat %in% c("corps_region_NCNE") ~"GE", #Lots of sites in both regions
+                     Stratf_Strat %in% c("corps_region_WMVC") & IncludePNW ~"WP", # A smattering of AW, GP sites for some reason
+                     Stratf_Strat %in% c("corps_region_WMVC") & !IncludePNW ~"W",
+                     Stratf_Strat %in% c("nwca_region_CPL") ~"E",#Only 4 GP sites. Not worth keeping
+                     Stratf_Strat %in% c("nwca_region_EMU") ~"GE",#Sites in both regions
+                     Stratf_Strat %in% c("nwca_region_IPL") ~"WGE",#Sites in multiple regions
+                     Stratf_Strat %in% c("nwca_region_WMT") & IncludePNW ~"WGP", #A handful of GP sites 
+                     Stratf_Strat %in% c("nwca_region_WMT") & !IncludePNW ~"WG",
+                     Stratf_Strat %in% c("nwca_region_XER") & IncludePNW ~"WGP", #A handful of GP sites 
+                     Stratf_Strat %in% c("nwca_region_XER") & !IncludePNW ~"WG",
+                     Stratf_Strat %in% c("ohwm_region_Northeast") ~"E",#Sites in multiple regions
+                     Stratf_Strat %in% c("ohwm_region_Northwest") & IncludePNW~"WGP", #A handfull of GP sites
+                     Stratf_Strat %in% c("ohwm_region_Northwest") & !IncludePNW~"WG", #A handfull of GP sites
+                     Stratf_Strat %in% c("ohwm_region_Northern Plains") ~"WGE",#1 AW site and 22 WM sites
+                     Stratf_Strat %in% c("ohwm_region_Southeast") ~"E",
+                     Stratf_Strat %in% c("ohwm_region_Southern Plains") ~"WG",
+                     Stratf_Strat %in% c("ohwm_region_Southwest") ~"W",
+                     T~"Other"))
 
-setdiff(junk$Metric, names(main_df))
 
-main_long<-main_df %>%
-  select(Region_DB, all_of(junk$Metric)) %>%
-  pivot_longer(cols=all_of(junk$Metric))
-main_long %>%
-  group_by(Region_DB, name) %>%
-  summarise(n_tot = length(value),
-            length_not_na = sum(!is.na(value))) %>%
-  ungroup() %>%
-  mutate(pct_complete = length_not_na/n_tot) %>%
-  select(-n_tot, -length_not_na) %>%
-  mutate(Region_DB=paste0(Region_DB,"_Complete")) %>%
-  pivot_wider(names_from=Region_DB, values_from = pct_complete) %>%
-  rename(Metric=name)%>%
-  right_join(junk) %>%
-  write_clip()
+mod_summary %>% filter(RegionalDatasets=="Other")%>% print(n=68)
+mod_summary %>% group_by(RegionalDatasets) %>% tally()
+xwalk_df %>%
+  filter(ohwm_region=="Southwest") %>%
+  group_by(beta_region) %>% tally()
+# filter(beta_region=="Northern Great Plains")
 
+
+# junk<-lumets #%>%  filter(MetricType!="Geospatial")
+# 
+# setdiff(junk$Metric, names(main_df))
+# 
+# main_long<-main_df %>%
+#   select(Region_DB, all_of(junk$Metric)) %>%
+#   pivot_longer(cols=all_of(junk$Metric))
+# main_long %>%
+#   group_by(Region_DB, name) %>%
+#   summarise(n_tot = length(value),
+#             length_not_na = sum(!is.na(value))) %>%
+#   ungroup() %>%
+#   mutate(pct_complete = length_not_na/n_tot) %>%
+#   select(-n_tot, -length_not_na) %>%
+#   mutate(Region_DB=paste0(Region_DB,"_Complete")) %>%
+#   pivot_wider(names_from=Region_DB, values_from = pct_complete) %>%
+#   rename(Metric=name)%>%
+#   right_join(junk) %>%
+#   write_clip()
+# 
 
 # main_df %>% skim_without_charts()
 # main_df %>% group_by(Region_DB) %>%
@@ -164,13 +182,13 @@ xwalk_df %>%
          pct = n/ntot) %>%
   slice_min(pct, n=1) %>%
   arrange(pct) %>%
-  select(-ntot) %>%
-  clipr::write_clip()
+  select(-ntot)# %>%  clipr::write_clip()
 
-#Assesss completeness
+#Continue to use the PNW minimum metric set to define complete cases
 main_df2<-main_df %>%
   select(SiteCode, Region_DB, Database, CollectionDate,
-         all_of(all_metrics_PNW)) %>%
+         all_of(metrics_p)) %>%
+  select(-Fish_UpTo3) %>%
   na.omit() %>%
   inner_join(xwalk_df %>% 
                rename(SiteCode=sitecode) %>%
@@ -289,12 +307,14 @@ mod_summary<- xwalk_df %>%
   crossing(IncludeGISPreds=c(T,F),
            IncludePNW=c(T,F)) %>%
   mutate(Stratf_Strat=paste(Stratification, Strata, sep="_"),
-    ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
+         ModName = case_when(IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW_GIS", sep="_"),
                              IncludeGISPreds & !IncludePNW~paste(Stratification, Strata, "GIS", sep="_"),
                              !IncludeGISPreds & IncludePNW~paste(Stratification, Strata, "PNW", sep="_"),
                              T~paste(Stratification, Strata, sep="_"))) %>%
   mutate(FlagNoPNW = case_when(
     Stratification == "all_region"~"OK",
+    Strata=="Caribbean"~"Delete",
+    Strata=="CB"~"Delete",
     
     Stratification == "beta_region" & Strata %in% c("PNW") & IncludePNW~"OK",
     Stratification == "beta_region" & Strata %in% c("PNW") & !IncludePNW~"Delete",
@@ -316,47 +336,145 @@ mod_summary<- xwalk_df %>%
     Stratification == "ohwm_region" & !Strata %in% c("Northwest") & IncludePNW~"Delete",
     Stratification == "ohwm_region" & !Strata %in% c("Northwest") & !IncludePNW~"OK",
   )) %>%
-  filter(FlagNoPNW != "Delete")
+  filter(FlagNoPNW != "Delete") %>%
+  mutate(RegionalDatasets = 
+           case_when(Stratification=="all_region" & IncludePNW~"WGEP",
+                     Stratification=="all_region" & !IncludePNW~"WGE",
+                     Stratf_Strat %in% c("beta_region_Arid West", "beta_region_Western Mountains") ~"W",
+                     Stratf_Strat %in% c("beta_region_Northeast", "beta_region_Southeast") ~"E",
+                     Stratf_Strat %in% c("beta_region_Northern Great Plains", "beta_region_Southern Great Plains") ~"G",
+                     Stratf_Strat %in% c("beta_region_PNW") ~"P",
+                     Stratf_Strat %in% c("corps_region_AGCP") ~"E", #There are two sites in Texas GP, so it's not worth dropping the data
+                     Stratf_Strat %in% c("corps_region_AW") & IncludePNW ~"WP", 
+                     Stratf_Strat %in% c("corps_region_AW") & !IncludePNW ~"W",
+                     Stratf_Strat %in% c("corps_region_EMP")  ~"E", 
+                     Stratf_Strat %in% c("corps_region_GP")  ~"GE", #There are 22 eastern sites, so keep. There is 1 WM site, so drop
+                     Stratf_Strat %in% c("corps_region_MW") ~"GE", #9 NE sites vs 41 NGP sites
+                     Stratf_Strat %in% c("corps_region_NCNE") ~"GE", #Lots of sites in both regions
+                     Stratf_Strat %in% c("corps_region_WMVC") & IncludePNW ~"WP", # A smattering of AW, GP sites for some reason
+                     Stratf_Strat %in% c("corps_region_WMVC") & !IncludePNW ~"W",
+                     Stratf_Strat %in% c("nwca_region_CPL") ~"E",#Only 4 GP sites. Not worth keeping
+                     Stratf_Strat %in% c("nwca_region_EMU") ~"GE",#Sites in both regions
+                     Stratf_Strat %in% c("nwca_region_IPL") ~"WGE",#Sites in multiple regions
+                     Stratf_Strat %in% c("nwca_region_WMT") & IncludePNW ~"WGP", #A handful of GP sites 
+                     Stratf_Strat %in% c("nwca_region_WMT") & !IncludePNW ~"WG",
+                     Stratf_Strat %in% c("nwca_region_XER") & IncludePNW ~"WGP", #A handful of GP sites 
+                     Stratf_Strat %in% c("nwca_region_XER") & !IncludePNW ~"WG",
+                     Stratf_Strat %in% c("ohwm_region_Northeast") ~"E",#Sites in multiple regions
+                     Stratf_Strat %in% c("ohwm_region_Northwest") & IncludePNW~"WGP", #A handfull of GP sites
+                     Stratf_Strat %in% c("ohwm_region_Northwest") & !IncludePNW~"WG", #A handfull of GP sites
+                     Stratf_Strat %in% c("ohwm_region_Northern Plains") ~"WGE",#1 AW site and 22 WM sites
+                     Stratf_Strat %in% c("ohwm_region_Southeast") ~"E",
+                     Stratf_Strat %in% c("ohwm_region_Southern Plains") ~"WG",
+                     Stratf_Strat %in% c("ohwm_region_Southwest") ~"W",
+                     T~"Other"))
+
+
+# mod_met_sets<-
+#   lumets %>%
+#   crossing(mod_summary) %>%
+#   mutate(
+#     MetUse = 
+#       case_when(
+#         MetricType=="Geospatial" & IncludeGISPreds ~T,
+#         MetricType=="Geospatial" & !IncludeGISPreds ~F,
+#         PNW~T,
+#         Stratification == "all_region" & IncludePNW & West & GP & East & PNW ~ T,
+#         Stratification == "all_region" & IncludePNW & !PNW ~ F,
+#         Stratification == "all_region" & !IncludePNW & West & GP & East  ~ T,
+#         Stratification == "all_region" & !IncludePNW & !(West & GP & East)  ~ F,
+#         T~NA,
+#       )
+#   )
+# mod_met_sets %>% 
+#   # filter(MetricType!="Geospatial") %>%
+#   filter(Stratification=="all_region")%>%
+#   filter(!IncludePNW & !PNW) %>%
+#   as.data.frame() %>% head()
 
 pnw_sites <-xwalk_df$sitecode[which(xwalk_df$beta_region=="PNW")]
+main_df3x<-main_df3 %>%
+  left_join(main_df %>%
+              select(SiteCode, CollectionDate,
+                     all_of(setdiff(all_metrics, names(main_df3)))))
+main_df3x %>% skim_without_charts()
+mod_summary$RegionalDatasets %>% unique()
+                                     
+
+
+
 
 mod_dats<-lapply(1:nrow(mod_summary), function(i){
   stratf.i=mod_summary$Stratification[i]
   strat.i=mod_summary$Strata[i]
   pnw.i=mod_summary$IncludePNW[i]
-  print(paste(stratf.i, strat.i, pnw.i))
-  main_df3.i<-main_df3 %>%
-    pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region,nwca_region), 
+  gis.i=mod_summary$IncludeGISPreds[i]
+  dbs.i=mod_summary$RegionalDatasets[i]
+  print(paste(stratf.i, strat.i, pnw.i, dbs.i))
+  main_df3.i<-main_df3x %>%
+    pivot_longer(cols=c(all_region,beta_region,ohwm_region,corps_region,nwca_region),
                  names_to = "Stratification", values_to = "Strata") %>%
-    filter(Stratification==stratf.i & Strata==strat.i) 
+    filter(Stratification==stratf.i & Strata==strat.i)
   if(pnw.i)
-    main_df3.i
+    main_df3.i=main_df3.i
   else
-    main_df3.i %>% filter(!SiteCode %in% pnw_sites )
-  if(stratf.i=="all_region")
-    main_df3.i %>%
+    main_df3.i=main_df3.i %>% filter(!SiteCode %in% pnw_sites )
+
+  #Figure out mets with 99% completeness
+  met_completeness<-main_df3.i %>%
+    select(SiteCode, CollectionDate, all_of(all_metrics)) %>%
+    pivot_longer(cols=all_of(all_metrics)) %>%
+    group_by(name) %>%
+    summarise(n_complete = sum(!is.na(value)),
+              n_total = length(SiteCode)) %>%
+    ungroup() %>%
+    mutate(PctComplete = n_complete/n_total)
+  print(met_completeness %>% filter(PctComplete<.99))
+  met_completeness<-met_completeness %>%
+    filter(PctComplete>=.99)
+  # print(met_completeness)
+  main_df3.i=main_df3.i %>%
+    select(SiteCode, Class, CollectionDate, DataType, all_of(met_completeness$name)) %>%
+    na.omit()
+  if(stratf.i=="all_region" & gis.i)
+    main_df3.i=main_df3.i %>%
     inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region))
   else
-    main_df3.i
+    main_df3.i=main_df3.i
+  if(gis.i)
+    main_df3.i=main_df3.i
+  else
+    main_df3.i=main_df3.i %>% select(-all_of(gis_metrics))
+  main_df3.i %>% na.omit()
 })
 
+skim(mod_dats[[1]])
+mod_summary
+setdiff(
+  names(mod_dats[[1]]),
+  names(mod_dats[[2]]))
 
 set.seed(2)
 mod_dats_split<-lapply(mod_dats, function(x){  
   x2 = x %>% select(SiteCode, Class) %>% unique()
   initial_split(x2, prop=4/5, strata=Class) })
 
-mod_dats_training<-lapply(mod_dats_split, function(x){
+mod_dats_training<-lapply(1:nrow(mod_summary), function(i){
+  x=mod_dats_split[[i]]
   x2 = training(x)
-  main_df3 %>%
-    filter(SiteCode %in% x2$SiteCode)
+  mod_dats[[i]] %>%     filter(SiteCode %in% x2$SiteCode)
 })
 
-mod_dats_testing<-lapply(mod_dats_split, function(x){
+setdiff(
+  names(mod_dats_training[[1]]),
+  names(mod_dats_training[[2]]))
+
+mod_dats_testing<-lapply(1:nrow(mod_summary), function(i){
+  x=mod_dats_split[[i]]
   x2 = testing(x)
-  main_df3 %>%
-    filter(SiteCode %in% x2$SiteCode)
+  mod_dats[[i]] %>%     filter(SiteCode %in% x2$SiteCode)
 })
+
 
 mod_summary$n_training<-sapply(mod_dats_split, function(x){
   x %>% training() %>% nrow() })
@@ -401,23 +519,34 @@ mod_summary$n_testing_E<-sapply(mod_dats_split, function(x){
 # })
 
 library(randomForest)
+# sapply(mod_dats, function(x) length(names(x)))
+
 my_rfs<-lapply(1:nrow(mod_summary), function(i){
+  # lapply(1:3, function(i){
   stratf.i=mod_summary$Stratification[i]
   gis.i = mod_summary$IncludeGISPreds[i]
   print(paste(i, mod_summary$ModName[i]))
+  mydat = mod_dats_training[[i]] %>% select(-CollectionDate, -SiteCode, -DataType)#,
+                                            # -Region_DB, -Database, -Region, -Region_detail,
+                                            # -Region_detail2, -Note, -beta_region,-ohwm_region, -corps_region,
+                                            # -nwca_region, -all_region, -DataType,
+                                            # -beta_id, -ohwm_id, -corps_id, -nwca_id,
+                                            # -lat, -long)
+  print(mydat %>% skim_without_charts())
   
-  if(gis.i) #UPDATE TO CONDITIONALLY INCLUDE MLRA
-    mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)))
-  else
-    mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW)))
-  
-  if(stratf.i=="all_region" & gis.i)
-    mydat = mydat %>% 
-    inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region)) %>%
-    select(-SiteCode)
-  else
-    mydat = mydat %>%    select(-SiteCode)
-  print("DRNAREA_mi2" %in% names(mydat))
+  # if(gis.i) #UPDATE TO CONDITIONALLY INCLUDE MLRA
+  #   mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)))
+  # else
+  #   mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW)))
+  # 
+  # if(stratf.i=="all_region" & gis.i)
+  #   mydat = mydat %>% 
+  #   inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region)) %>%
+  #   select(-SiteCode)
+  # else
+  #   mydat = mydat %>%    select(-SiteCode)
+  # print("DRNAREA_mi2" %in% names(mydat))
+  # print(skim(mydat))
   set.seed(200+i)
   rf.i=randomForest(Class~., 
                     data=mydat, 
@@ -430,16 +559,30 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
     best2_gis_df = rf.i$importance %>%
       as_tibble() %>%
       mutate(myvar = row.names(rf.i$importance)) %>%
-      filter(myvar %in% GISPreds) %>%
+      filter(myvar %in% gis_metrics) %>%
       slice_max(MeanDecreaseAccuracy, n=2)
+    mydat2 = mydat %>% select(-setdiff(gis_metrics, best2_gis_df$myvar))
     set.seed(300+i)
     randomForest(Class~., 
-                 data=mydat %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
+                 data=mydat2,# %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
                  importance=T,
                  proximity=T)
   }
   
 })
+mod_summary
+
+setdiff(
+setdiff(my_rfs[[1]]$importance %>% row.names(),
+        my_rfs[[2]]$importance %>% row.names()),
+setdiff(mod_dats[[1]] %>% names(),
+        mod_dats[[2]] %>% names())
+)
+
+setdiff(my_rfs[[2]]$importance %>% row.names(),
+        mod_dats[[2]] %>% names())
+
+
 
 ####
 #Importance
@@ -465,10 +608,10 @@ rf_sum_importance<-lapply(1:nrow(mod_summary), function(i){
     rename(P_imp=P, I_imp=I, E_imp=E)
   
 }) %>% bind_rows() %>%
-  mutate(MetricType=case_when(Metric %in% GeomorphPreds_PNW~"Geomorphic",
-                              Metric %in% GISPreds~"GIS",
-                              Metric %in% HydroPreds_Indirect_PNW~"Hydro",
-                              Metric %in% BioPreds_PNW~"Bio",
+  mutate(MetricType=case_when(Metric %in% lumets$Metric[which(lumets$MetricType=="Geomorph")]~"Geomorphic",
+                              Metric %in% lumets$Metric[which(lumets$MetricType=="Geospatial")]~"GIS",
+                              Metric %in% lumets$Metric[which(lumets$MetricType=="Hydro")]~"Hydro",
+                              Metric %in% lumets$Metric[which(lumets$MetricType=="Biology")]~"Bio",
                               T~"Other" ),
          RegLabel = paste(Regionalization, Region_id, sep="-"))
 
@@ -622,6 +765,8 @@ outcomes_plot_dat<-mod_summary %>%
          P_freq, I_freq, ALI_freq, E_freq, NMI_freq) %>%
   pivot_longer(cols=(ends_with("freq"))) %>%
   mutate(name=factor(name, levels=c("P_freq","I_freq","ALI_freq","E_freq", "NMI_freq")))
+
+outcomes_plot_dat %>% group_by(name) %>% summarise(maximum = max(value))
 
 outcomes_plot<-  ggplot(data=outcomes_plot_dat, aes(x=ModName, y=value))+
   geom_bar(aes(fill=name), stat="identity") +
@@ -970,7 +1115,7 @@ ggsave(precision_performance_metrics_xpnw, filename="Figures_VaryingPredictors/p
 
 
 mod_summary_long %>%
-  filter(Comparison=="EnotP" & Stratification=="corps_region_short" & !IncludeGISPreds & SiteSet=="Testing")
+  filter(Comparison=="EnotP" & Stratification=="corps_region" & !IncludeGISPreds & SiteSet=="Testing")
 ##################
 
 

@@ -122,7 +122,7 @@ pnw_df<-pnw_df_raw%>%
             
   )
 
-pnw_df %>% select(contains("moss"))  %>%
+pnw_df %>% select(contains("rip"))  %>%
   skim()
   
 pnw_df %>%
