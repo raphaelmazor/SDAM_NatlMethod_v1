@@ -1249,3 +1249,11 @@ subpop_accuracy_plot_diffpnw<-mod_summary_assessment_strata_long %>%
   geom_hline(yintercept=0)+
   scale_y_continuous(breaks=(seq(from=-.8, to=.4, by=.1)))
 ggsave(subpop_accuracy_plot_diffpnw, filename="Figures/subpop_accuracy_plot_diffpnw.png", height=6, width=7.5)
+
+
+
+write_csv(mod_summary, "Figures/mod_summary.csv")
+write_csv(mod_summary_assessment_strata, "Figures/mod_summary_strata.csv")
+write_csv(mod_summary_assessment_strata_long, "Figures/mod_summary_assessment_strata_long.csv")
+write_csv(mod_summary_long, "Figures/mod_summary_long.csv")
+write_csv(mod_summary_long_across_strata, "Figures/mod_summary_long_across_strata.csv")
