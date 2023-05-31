@@ -438,7 +438,7 @@ mod_dats<-lapply(1:nrow(mod_summary), function(i){
     na.omit()
   if(stratf.i=="all_region" & gis.i)
     main_df3.i=main_df3.i %>%
-    inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region))
+    inner_join(xwalk_df %>% select(SiteCode=sitecode, mlra=corps_region, beta=beta_region, ohwm=ohwm_region, nwca=nwca_region))
   else
     main_df3.i=main_df3.i
   if(gis.i)
@@ -522,7 +522,7 @@ library(randomForest)
 # sapply(mod_dats, function(x) length(names(x)))
 
 my_rfs<-lapply(1:nrow(mod_summary), function(i){
-  # lapply(1:3, function(i){
+  # lapply(3:5, function(i){
   stratf.i=mod_summary$Stratification[i]
   gis.i = mod_summary$IncludeGISPreds[i]
   print(paste(i, mod_summary$ModName[i]))
@@ -532,7 +532,7 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
                                             # -nwca_region, -all_region, -DataType,
                                             # -beta_id, -ohwm_id, -corps_id, -nwca_id,
                                             # -lat, -long)
-  print(mydat %>% skim_without_charts())
+  # print(mydat %>% skim_without_charts())
   
   # if(gis.i) #UPDATE TO CONDITIONALLY INCLUDE MLRA
   #   mydat = mod_dats_training[[i]] %>%  select(SiteCode, Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, GISPreds)))
@@ -554,20 +554,54 @@ my_rfs<-lapply(1:nrow(mod_summary), function(i){
                     proximity=T)
   if(!gis.i)
     rf.i
-  else
+  if(gis.i & stratf.i!="all_region")
   {
     best2_gis_df = rf.i$importance %>%
       as_tibble() %>%
       mutate(myvar = row.names(rf.i$importance)) %>%
       filter(myvar %in% gis_metrics) %>%
       slice_max(MeanDecreaseAccuracy, n=2)
-    mydat2 = mydat %>% select(-setdiff(gis_metrics, best2_gis_df$myvar))
+    print(best2_gis_df$myvar)
+    # best_region_df = rf.i$importance %>%
+    #   as_tibble() %>%
+    #   mutate(myvar = row.names(rf.i$importance)) %>%
+    #   filter(myvar %in% c("mlra","beta","ohwm","nwca")) %>%
+    #   slice_max(MeanDecreaseAccuracy, n=1)
+    # print(best_region_df$myvar)
+    mydat2 = mydat %>% 
+      select(-setdiff(gis_metrics, best2_gis_df$myvar))# %>%
+      # select(-setdiff(c("mlra","beta","ohwm","nwca"),best_region_df$myvar))
     set.seed(300+i)
-    randomForest(Class~., 
+    rf.i=randomForest(Class~., 
                  data=mydat2,# %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
                  importance=T,
                  proximity=T)
   }
+    if(gis.i & stratf.i=="all_region")
+    {
+      best2_gis_df = rf.i$importance %>%
+        as_tibble() %>%
+        mutate(myvar = row.names(rf.i$importance)) %>%
+        filter(myvar %in% gis_metrics) %>%
+        slice_max(MeanDecreaseAccuracy, n=2)
+      print(best2_gis_df$myvar)
+      best_region_df = rf.i$importance %>%
+        as_tibble() %>%
+        mutate(myvar = row.names(rf.i$importance)) %>%
+        filter(myvar %in% c("mlra","beta","ohwm","nwca")) %>%
+        slice_max(MeanDecreaseAccuracy, n=1)
+      print(best_region_df$myvar)
+      mydat2 = mydat %>% 
+        select(-setdiff(gis_metrics, best2_gis_df$myvar)) %>%
+      select(-setdiff(c("mlra","beta","ohwm","nwca"),best_region_df$myvar))
+      set.seed(300+i)
+      rf.i=randomForest(Class~., 
+                        data=mydat2,# %>% select(Class, all_of(c(BioPreds_PNW, GeomorphPreds_PNW, HydroPreds_Indirect_PNW, best2_gis_df$myvar))), 
+                        importance=T,
+                        proximity=T)
+    
+  }
+  rf.i
   
 })
 mod_summary
@@ -610,6 +644,7 @@ rf_sum_importance<-lapply(1:nrow(mod_summary), function(i){
 }) %>% bind_rows() %>%
   mutate(MetricType=case_when(Metric %in% lumets$Metric[which(lumets$MetricType=="Geomorph")]~"Geomorphic",
                               Metric %in% lumets$Metric[which(lumets$MetricType=="Geospatial")]~"GIS",
+                              Metric %in% c("mlra","beta","nwca","ohwm")~"GIS_spatial",
                               Metric %in% lumets$Metric[which(lumets$MetricType=="Hydro")]~"Hydro",
                               Metric %in% lumets$Metric[which(lumets$MetricType=="Biology")]~"Bio",
                               T~"Other" ),
@@ -642,8 +677,42 @@ variable_importance_plot_pnw<-ggplot(imp_plot_dat %>%
         panel.grid = element_blank())+
   ggtitle("Variable importance", subtitle =  "Includes PNW data")+
   xlab("")+ylab("")
-
 ggsave(variable_importance_plot_pnw, filename="Figures_VaryingPredictors/variable_importance_plot_pnw.png", height=15, width=9)
+
+variable_importance_plot_pnw_gis<-ggplot(imp_plot_dat %>% 
+                                       group_by(Regionalization, Region_id, GIS) %>%
+                                       slice_max(PNWtf, n=1) %>%
+                                         filter(GIS=="GIS"), 
+                                     aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile(color="white")+
+  scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(GIS~Regionalization, scales="free", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1),
+        panel.grid = element_blank())+
+  ggtitle("Variable importance", subtitle =  "Includes PNW data")+
+  xlab("")+ylab("")
+ggsave(variable_importance_plot_pnw_gis, filename="Figures_VaryingPredictors/variable_importance_plot_pnw_gis.png", height=15, width=9)
+
+variable_importance_plot_pnw_xgis<-ggplot(imp_plot_dat %>% 
+                                           group_by(Regionalization, Region_id, GIS) %>%
+                                           slice_max(PNWtf, n=1) %>%
+                                           filter(GIS!="GIS"), 
+                                         aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile(color="white")+
+  scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(GIS~Regionalization, scales="free", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1),
+        panel.grid = element_blank())+
+  ggtitle("Variable importance", subtitle =  "Includes PNW data")+
+  xlab("")+ylab("")
+ggsave(variable_importance_plot_pnw_xgis, filename="Figures_VaryingPredictors/variable_importance_plot_pnw_xgis.png", height=15, width=9)
+
+
+
 variable_importance_plot_xpnw<-ggplot(imp_plot_dat %>% 
                                         group_by(Regionalization, Region_id, GIS) %>%
                                         slice_min(PNWtf, n=1), 
@@ -657,9 +726,39 @@ variable_importance_plot_xpnw<-ggplot(imp_plot_dat %>%
         panel.grid = element_blank())+
   ggtitle("Variable importance", subtitle =  "Excludes PNW data")+
   xlab("")+ylab("")
-
 ggsave(variable_importance_plot_xpnw, filename="Figures_VaryingPredictors/variable_importance_plot_xpnw.png", height=15, width=9)
 
+
+variable_importance_plot_xpnw_gis<-ggplot(imp_plot_dat %>% 
+                                        group_by(Regionalization, Region_id, GIS) %>%
+                                        slice_min(PNWtf, n=1) %>% filter(GIS=="GIS"), 
+                                      aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile(color="white")+
+  scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(GIS~Regionalization, scales="free", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1),
+        panel.grid = element_blank())+
+  ggtitle("Variable importance", subtitle =  "Excludes PNW data")+
+  xlab("")+ylab("")
+ggsave(variable_importance_plot_xpnw_gis, filename="Figures_VaryingPredictors/variable_importance_plot_xpnw_gis.png", height=15, width=9)
+
+
+variable_importance_plot_xpnw_xgis<-ggplot(imp_plot_dat %>% 
+                                            group_by(Regionalization, Region_id, GIS) %>%
+                                            slice_min(PNWtf, n=1) %>% filter(GIS!="GIS"), 
+                                          aes(x=Region_id, y=Metric, fill=MeanDecreaseAccuracy))+
+  geom_tile(color="white")+
+  scale_fill_viridis_c(trans="sqrt", na.value = "gray", name="MDA")+
+  # facet_wrap(~Regionalization, scales="free_x", nrow=1)+
+  facet_grid(GIS~Regionalization, scales="free", space="free")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1),
+        panel.grid = element_blank())+
+  ggtitle("Variable importance", subtitle =  "Excludes PNW data")+
+  xlab("")+ylab("")
+ggsave(variable_importance_plot_xpnw_xgis, filename="Figures_VaryingPredictors/variable_importance_plot_xpnw_xgis.png", height=15, width=9)
 
 ####################
 
@@ -1364,7 +1463,7 @@ mod_summary_assessment_strata$Correct_EvALI_testing<-sapply(1:nrow(mod_summary_a
   sum(xdf$CORRECT)
 })
 
-
+# mod_summary_assessment_strata %>% filter(AssessmentStratum=="SPD" & Stratification=="beta_region" & IncludeGISPreds )
 
 
 mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
@@ -1372,6 +1471,7 @@ mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
   pivot_longer(cols=c(starts_with("n"), starts_with("Correct"))) %>%
   group_by(Stratification, IncludeGISPreds, IncludePNW, AssessmentStratum, name) %>%
   summarise(value=sum(value)) %>%
+  # filter(AssessmentStratum=="SPD" & Stratification=="beta_region")
   pivot_wider(names_from="name", values_from = "value", values_fill = 0) %>%
   ungroup() %>%
   mutate(
@@ -1408,7 +1508,10 @@ mod_summary_assessment_strata_long<-mod_summary_assessment_strata %>%
 mod_summary_assessment_strata_long %>%
   filter(Stratification=="beta_region" & 
            AssessmentStratum=="SPD" & IncludeGISPreds & 
-           SiteSet=="Training")
+           SiteSet=="Testing")
+mod_summary_assessment_strata %>%
+  filter(Stratification=="beta_region" &  AssessmentStratum=="SPD" & IncludeGISPreds & Strata %in% c("Arid West","PNW"))
+  
 
 subpop_accuracy_plot_pnw<-ggplot(data=mod_summary_assessment_strata_long %>%
                                    filter(MetricType2=="Accuracy") %>%
