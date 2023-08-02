@@ -6,7 +6,8 @@ library(elevatr)
 library(raster)
 library(exactextractr)
 
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
+xwalk_df<-#read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
+  read_csv("Data/master_site_class_xwalk_08012023_coordinates_REGIONS.csv") %>%
   mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
                                     T~Region_detail) %>%
            factor(levels=c("AW","WM","GP","NE","SE", "CB")),
@@ -14,7 +15,7 @@ xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv"
 
 gis_gp<-read_csv("Data/GISmetrics/gis_metrics_GP.csv") %>% dplyr::select(-`...1`,-ParentGlobalID, -ColdWetMonths, -ColdMonths, -WetMonths, -SnowDom_PptTemp)
 gis_nese<-read_csv("Data/GISmetrics/gis_metrics_NESE_withcaribbean.csv") %>% dplyr::select(-ParentGlobalID, -BFI)
-gis_wm<-read_csv("Data/GISmetrics/gis_metrics_WM.csv") %>% dplyr::select(-`...1`, -starts_with("Eco"), -ColdWetMonths, -ColdMonths, -WetMonths, -SnowDom_PptTemp, -SnowDom_Eco)
+gis_wm<-read_csv("Data/GISmetrics/gis_metrics_WM.csv") %>% dplyr::select(-`...1`, -starts_with("Eco"), -ColdWetMonths, -ColdMonths, -WetMonths, -SnowDom_PptTemp, -SnowDom_Eco) 
 
 # identical(names(gis_gp), names(gis_nese))
 # identical(names(gis_nese),names(gis_gp))
@@ -25,6 +26,9 @@ gis_already<-bind_rows(gis_wm, gis_gp, gis_nese) %>%
   filter(SiteCode %in% xwalk_df$sitecode) %>%
   group_by(SiteCode) %>%
   slice_head(n=1) 
+gis_already<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df_08012023.csv") %>%
+  filter(SiteCode!="MTWM1835") #Rerunning for this one site that had bad coordinates
+  
   
 
 setdiff(xwalk_df$sitecode, gis_already$SiteCode)
@@ -224,5 +228,5 @@ gis_metrics_df<-gis_already %>%
 
 skim_without_charts(gis_metrics_df)
 
-write_csv(gis_metrics_df, "Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+write_csv(gis_metrics_df, "Data/GISmetrics/COMPLETE_gis_metrics_df_08012023.csv")
 detach(package:raster)

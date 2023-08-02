@@ -12,7 +12,7 @@ library(clipr)
 lumets<-read_csv("Data/metric_lookup.csv")
 
 #############Import data
-gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df.csv")
+gis_metrics_df<-read_csv("Data/GISmetrics/COMPLETE_gis_metrics_df_08012023.csv")
 
 main_df_nopnw<-read_csv("NotForGit/Step1/main_df_step1.csv")
 

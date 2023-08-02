@@ -2,7 +2,7 @@ library(tidyverse)
 
 #Import xwalk<-
 xwalk_df<-#read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
-  read_csv("Data/master_site_class_xwalk_030723_coordinates_REGIONS.csv") %>%
+  read_csv("Data/master_site_class_xwalk_08012023_coordinates_REGIONS.csv") %>%
   mutate(
     # Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
     #                                 T~Region_detail) %>%

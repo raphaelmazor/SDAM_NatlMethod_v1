@@ -1,7 +1,7 @@
 library(tidyverse)
 
 #Import xwalk<-
-xwalk_df<-read_csv("Data/master_site_class_xwalk_030723_coordinates.csv") %>%
+xwalk_df<-read_csv("Data/master_site_class_xwalk_08012023_coordinates_REGIONS.csv") %>%
   mutate(Region_detail2 = case_when(Region_detail %in% c("GP_C","GP_N","GP_S","GP_U")~"GP",
                                     T~Region_detail) %>%
            factor(levels=c("AW","WM","GP","NE","SE", "CB")),
@@ -78,11 +78,11 @@ ai_combined <- ai_df %>%
       AI_Taxon %in% c("Odonata Antisoptera", "Dragonfly",
                       "Anisoptera sp")~"Anisoptera",
       
-      AI_Taxon %in% c("Ephemeroptera Ameletidae")~"Ameletidae", 
+      AI_Taxon %in% c("Ephemeroptera Ameletidae","ameletidae")~"Ameletidae", 
       AI_Taxon %in% c("Hemiptera belostomatida","Hemiptera Belostomatidae","belostomaridae","Belostomaridae",
                       "Belastomatidae","belostomatidae",
                       "Hemiptera belostomatidae")~"Belostomatidae", 
-      AI_Taxon %in% c("Bastiscidae","Baetiscidae")~"Baetiscidae",
+      AI_Taxon %in% c("Bastiscidae","Baetiscidae","Baestiscidae")~"Baetiscidae",
       AI_Taxon %in% c("Caecidotea sp")~"Caecidotea",
       AI_Taxon %in% c("Startiomyidae","Stratiomyiidae")~"Stratiomyidae",
       AI_Taxon %in% c("Canidae","Ceanidae")~"Caenidae",
@@ -98,7 +98,7 @@ ai_combined <- ai_df %>%
                       "Unknown beetle")~"Coleoptera",
       
       AI_Taxon %in% c("Bivalve spp?","Bivalves","Bivalve?")~"Bivalve",
-      AI_Taxon %in% c("Brachycentidae","Bracycentridae",
+      AI_Taxon %in% c("Brachycentidae","Bracycentridae","Brachycentridae",
                       "Trichoptera brachycentridae",
                       "brachycentridae")~"Brachycentridae",
       AI_Taxon %in% c("Bulk", "Bulk 1", "Bulk 2","bulk sample","Bulk sample", "Bulk Sample","BULK SAMPLE","Bulk sample #1",
@@ -148,7 +148,8 @@ ai_combined <- ai_df %>%
                        "Simullidae")~"Simuliidae", 
       AI_Taxon %in% c( "Dobsonfly")~"Corydalidae",
       AI_Taxon %in% c( "Dreissenidae")~"Dreissenidae",
-      AI_Taxon %in% c( "Corydalidae - Orohermes","Corydalidae (Oreohermes-Dysmicohermes group)",
+      AI_Taxon %in% c( "Corydalidae (N-P)","Corydalidae (Neohermes-Protochauliodes group)")~"Corydalidae (Neohermes-Protochauliodes group)",
+      AI_Taxon %in% c( "Corydalidae - Orohermes","Corydalidae (Oreohermes-Dysmicohermes group)","Corydalus (O-D group)","Corydalidae (O-D group)",
                        "Corydalidae (orohermes group)","Corydalidae orohermes",
                        "Orohermes")~"Corydalidae (Orohermes-Dysmicohermes group)", # Added 9/26 KSM 
       AI_Taxon %in% c( "Corydalidae (Corydalus)", "Corydalus sp.", 
@@ -168,7 +169,7 @@ ai_combined <- ai_df %>%
                        "Ephemeroptera sp", "ephemeroptera sp","mayfly","Ephemeroptera unkn",
                        "Unknown mayfly")~"Ephemeroptera",
       
-      AI_Taxon %in% c( "Ephemeroptera heptagiidae",
+      AI_Taxon %in% c( "Ephemeroptera heptagiidae","Ephemeroptera Heptageniidae",
                        "Ephemeroptera heptageniidae")~"Heptageniidae", 
       AI_Taxon %in% c( "Fallceon and Baetis adonis","Fallceon and Baetis adonis and Tricorythodes",
                        "Ephemeroptera Baetidae", "baetidae","Baetiidae")~"Baetidae", 
@@ -185,7 +186,7 @@ ai_combined <- ai_df %>%
       AI_Taxon %in% c( "Helicopsycidae","Heliopsychidae")~"Helicopsychidae",
       AI_Taxon %in% c( "Hydropsyche occidentalis",
                        "Hydro physidae", "Hydrophychidae", "Hydrophycidae","Hydrophyschidae",
-                       "Hydropsididae","Hydrosychidae", "Hyrdopsychidae", "Trichoptera Hydropyschidae",
+                       "Hydropsididae","Hydrosychidae", "Hyrdopsychidae", "Trichoptera Hydropyschidae", "Trichoptera hydropsychidae",
                        "Trichoptera hydrosychidae","hydropsychidae")~"Hydropsychidae",
       AI_Taxon %in% c( "Hyallelidae")~"Hyalellidae", 
       AI_Taxon %in% c( "Hydrobiid")~"Hydrobiidae", 
@@ -203,11 +204,11 @@ ai_combined <- ai_df %>%
       AI_Taxon %in% c( "Isopod","Isopods")~"Isopoda", 
       AI_Taxon %in% c( "Lepidodoptera","Lepidoptera (larvae)")~"Lepidoptera", 
       AI_Taxon %in% c( "Leptoceridae (Ceraclea)")~"Ceraclea", 
-      AI_Taxon %in% c( "Leptophleniidae","Leptophylebiidae")~"Leptophlebiidae", 
+      AI_Taxon %in% c( "Leptophleniidae","Leptophylebiidae", "leptophlebiidae")~"Leptophlebiidae", 
       AI_Taxon %in% c( "Libuellidae","libellulidae")~"Libellulidae", 
       AI_Taxon %in% c( "Limnaeidae","lymaeidae","Lymnadae","Lymnaedae","Lymnaeid","lymnaeidae",
                        "Lymnaidae")~"Lymnaeidae", 
-      AI_Taxon %in% c( "Limnphild","Lmniphild","Limephilidae","Lmniphilid","Lmniphillid","Limnephilidae/phryganeidae",
+      AI_Taxon %in% c( "Limnphild","Lmniphild","Limephilidae","Lmniphilid","Lmniphillid","Limnephilidae/phryganeidae","Trichoptera limnephilidae",
                        "Limnophilidae","Limnephillidae","Tricoptera limnephilidae")~"Limnephilidae",
       AI_Taxon %in% c("Mysida")~"Mysidae",
       AI_Taxon %in% c( "Limnephilidae (Onocosmoecus)")~"Onocosmoecus", 
@@ -253,7 +254,7 @@ ai_combined <- ai_df %>%
                        "Sphaerridae", "Spheridae",
                        "Pisidium")~"Sphaeriidae", # Added 9/26 KSM
       AI_Taxon %in% c("Planorbid","Planoridae","planorbidae")~"Planorbidae",
-      AI_Taxon %in% c("Platyhelmenthes","Platyhelminthyes")~"Platyhelminthes",
+      
       AI_Taxon %in% c( "Plecoptera exuvia", "Stonefly","Stoneflies","Stonefly?","Stonefly larvae",
                        "Stoneflys" ,"Plecoptera spp")~"Plecoptera",
       AI_Taxon %in% c( "Plecoptera: Golden stonefly?","Pearlidae" ,
@@ -281,7 +282,7 @@ ai_combined <- ai_df %>%
       AI_Taxon %in% c( "Tipuliidae","tipulidae","Tipula","Tipula sp" )~"Tipulidae",
       AI_Taxon %in% c( "Tubellaria","Turbellaria platyhelminthes","Flat worms - Turbellaria",
                        "Flatworm - Turbellaria","Flatworms - Turbellaria","Flat worms","Flat Worms",
-                       "Platyheleminthes", "Dugesiidae","Tubelaria")~"Turbellaria",
+                       "Platyheleminthes", "Dugesiidae","Tubelaria","Platyhelmenthes","Platyhelminthyes")~"Turbellaria",
       AI_Taxon %in% c( "Tricorythidae (Tricorythodes)" )~"Tricorythodes",
       AI_Taxon %in% c(  "Thienemannimyia group", "Thinemannimyia group" )~"Thienemannimyia group",
       AI_Taxon %in% c( "Tricorythidae" )~"Tricorythidae",
@@ -295,6 +296,7 @@ ai_combined <- ai_df %>%
                        "Unknown spp" ,"Pupa?","Unknown 1", "Unknown insect larvae",
                        "Unknown1", "Unknown2")~"Insecta",
       AI_Taxon %in% c("Vivaparidae" )~"Viviparidae",
+      AI_Taxon %in% c("lestidae" )~"Lestidae",
       AI_Taxon %in% c("Snail - Juga" )~"Juga",
       AI_Taxon %in% c("Nemertea","Tetrastemmatidae" )~"Nemertea",
       AI_Taxon %in% c("Antocha","Hexatoma","Limnophila", "Pseudolimnophila")~"Limoniidae", # Added 9/26 KSM
@@ -315,6 +317,7 @@ ai_combined <- ai_df %>%
                        "Acari")~"Acariformes",  # ADDED 9/26 KSM
       AI_Taxon2 %in% c("Aeshnidae","Aeshniae")~"Aeshnidae",
       AI_Taxon2 %in% c("Agabus")~"Dytiscidae",
+      AI_Taxon2 %in% c("Deuterophlebiidae")~"Deuterophlebiidae",
       AI_Taxon2 %in% c("Ameletidae")~"Ameletidae",
       AI_Taxon2 %in% c("Hyalella","Amphipoda","Crangonyctidae","Talitridae","Hyalellidae" ,"Gammaridae")~"Amphipoda",
       AI_Taxon2 %in% c("Anisoptera", "Odonata","Zygoptera")~"ODONATA",
@@ -329,7 +332,7 @@ ai_combined <- ai_df %>%
       AI_Taxon2 %in% c("Bulk sample")~"BULK",
       AI_Taxon2 %in% c("Caenidae")~"Caenidae",
       AI_Taxon2 %in% c("Hydrochidae")~"Hydrochidae",
-      AI_Taxon2 %in% c("Cambaridae")~"Cambaridae",
+      AI_Taxon2 %in% c("Cambaridae","Procambarus clarkii")~"Cambaridae",
       AI_Taxon2 %in% c("Astacidae")~"Astacidae",
       AI_Taxon2 %in% c("Cheumatopsyche", "Hydropsychidae","Hydropyschidae","Hydropschyidae")~"Hydropsychidae", 
       AI_Taxon2 %in% c("Chironomidae", "Thienemannimyia group")~"Chironomidae",
@@ -516,7 +519,12 @@ ai_combined <- ai_df %>%
       AI_Taxon2 %in% c("Mollusca" )~"MOLLUSCA",# Added 9/26 KSM
       AI_Taxon2 %in% c("Nematomorpha" )~"NEMATOMORPHA",# Added 9/26 KSM
       AI_Taxon2 %in% c("Nematoda" )~"NEMATODA",# Added 9/26 KSM
-      AI_Taxon2 %in% c("No invertebrates observed" ,"BULK")~"Exclude",# Added 9/26 KSM
+      AI_Taxon2 %in% c("Diptera")~"DIPTERA",# Added RDM 072823
+      AI_Taxon2 %in% c("Hydrophiloidea")~"COLEOPTERA",# Added RDM 072823
+      AI_Taxon2 %in% c("No invertebrates observed" ,"BULK","Exclude","Not Recorded","None Observed",
+                       "Terrestrial sp",
+                       "Crambidae","Arthropoda")~"Exclude",# Added 9/26 KSM
+      
       T~"Exclude"),
     
     # ai_combined %>% 
@@ -544,7 +552,7 @@ ai_combined <- ai_df %>%
                        "Lutrochidae","Hydraenidae","Hydraenidae","Helophoridae","Eulichadidae","Georissidae",
                        "Staphylinidae","Amphizoidae","Carabidae","Hydroscaphidae",
                        "Hydrochidae", "Hydrophilidae", "Psephenidae","Ptilodactylidae","Scirtidae")~"Coleoptera",
-      AI_Family %in% c("Athericidae", "Blephariceridae", "Ceratopogonidae", "Chaoboridae", 
+      AI_Family %in% c("Athericidae", "Blephariceridae", "Ceratopogonidae", "Chaoboridae", "Deuterophlebiidae",
                        "Chironomidae", "Sciomyzidae","Syrphidae","Tanyderidae",
                        "Culicidae","Thaumaleidae","Pelecorhynchidae",
                        "DIPTERA", "Dixidae", "Dolichopodidae","Empididae","Ephydridae","Limoniidae",
@@ -566,47 +574,23 @@ ai_combined <- ai_df %>%
       AI_Family %in% c("Corydalidae","Sialidae","MEGALOPTERA")~"Megaloptera",
       AI_Family %in% c("LEPIDOPTERA","Pyralidae","Crambidae")~"Lepidoptera",
       AI_Family %in% c("NEUROPTERA")~"Neuroptera",
+      AI_Family %in% c("Cnidaria")~"Cnidaria",
+      # AI_Family %in% c("Mollusca")~"Mollusca",
       T~"OtherOrder_OrderNotKnown"
       
     ),
     #This code assigns families to appropriate groups to assist with metric calculation
     AI_Ephemeroptera = AI_Order=="Ephemeroptera",
-    # AI_Family %in% c("Ameletidae", "Baetidae","Baetiscidae", "Caenidae", "Ephemerellidae","Ephemeridae", "EPHEMEROPTERA", 
-    #                                   "Heptageniidae", "Isonychiidae", "Leptohyphidae", "Leptophlebiidae", 
-    #                                   "Polymitarcyidae", "Siphlonuridae", "Tricorythidae","Potamanthidae"), # ADDED BY KSM DEC 22
     AI_Plecoptera = AI_Order=="Plecoptera",
-    # AI_Family %in% c("Capniidae", "Chloroperlidae", "Leuctridae", "Nemouridae","Peltoperlidae", 
-    #                                "Perlidae", "Perlodidae", "PLECOPTERA","Pteronarcyidae", "Taeniopterygidae"), 
     AI_Trichoptera = AI_Order=="Trichoptera",
-    # AI_Family %in% c("Brachycentridae", "Calamoceratidae", "Glossosomatidae", "Helicopsychidae",
-    #                                 "Hydropsychidae", "Hydroptilidae","Lepidostomatidae","Leptoceridae", "Limnephilidae",
-    #                                 "Odontoceridae",  "Philopotamidae", "Phryganeidae","Polycentropodidae",
-    #                                 "Rhyacophilidae","Sericostomatidae", "TRICHOPTERA","Uenoidae","Hydrobiosidae","Psychomyiidae"),
     AI_EPT = AI_Ephemeroptera | AI_Plecoptera | AI_Trichoptera,
     AI_Odonata =  AI_Order=="Odonata",
-    # AI_Family %in% c("Aeshnidae", "Calopterygidae", "Coenagrionidae", "Cordulegastridae","Corduliidae", 
-    # "Gomphidae", "Lestidae", "Libellulidae","Macromiidae", "ODONATA"),
     AI_Hemiptera = AI_Order=="Hemiptera",
-    # AI_Family %in% c("Belostomatidae", "Corixidae", "Gerridae", "HEMIPTERA", "Naucoridae", 
-    #                               "Nepidae", "Notonectidae", "Pleidae", "Veliidae"), # ADDED BY KSM DEC 22
     AI_Coleoptera = AI_Order=="Coleoptera",
-    # AI_Family %in% c("COLEOPTERA", "Dryopidae", "Dytiscidae", "Elmidae","Gyrinidae", "Haliplidae",
-    # "Hydrophilidae", "Psephenidae","Ptilodactylidae","Scirtidae"),
     AI_Diptera = AI_Order == "Diptera",
-    # AI_Family %in% c("Athericidae", "Blephariceridae", "Ceratopogonidae", "Chaoboridae", 
-    #                             "Chironomidae", 
-    #                             "Culicidae",
-    #                             "DIPTERA", "Dixidae", "Dolichopodidae","Empididae","Ephydridae","Limoniidae",
-    #                             "Muscidae","Pediciidae","Psychodidae","Ptychopteridae", "Simuliidae", 
-    #                             "Stratiomyidae", "Tabanidae", "Tipulidae"),
     AI_Gastropod = AI_Order=="GASTROPODA",
     AI_Basommatophora = AI_Family %in% c("Acroloxidae","Ancylidae","Lymnaeidae","Physidae","Planorbidae"), #Not really a recognized group anymore
-    # AI_Family %in% c("Ancylidae", "GASTROPODA", "Hydrobiidae", "Physidae", "Planorbidae", 
-    # "Thiaridae","Lymnaeidae","Pleuroceridae","Valvatidae","Viviparidae"),# ADDED BY KSM DEC 22
     AI_Bivalve = AI_Order=="BIVALVIA",
-    # AI_Family %in% c("BIVALVE", "Corbiculidae", "Dreissenidae", "Margaritiferidae", "Sphaeriidae",
-    # "Unionidae"),
-    # AI_Clams = AI_Family %in% c("Corbiculidae",  "Sphaeriidae"),
     AI_Bivalve_Nonfingernail = AI_Family %in% c("BIVALVE", "Corbiculidae", "Dreissenidae", "Margaritiferidae", "Unionidae"),
     AI_Clams_Fingernail = AI_Family %in% c("Sphaeriidae"),
     AI_Mollusk = (AI_Gastropod | AI_Bivalve),
@@ -618,7 +602,7 @@ ai_combined <- ai_df %>%
                                                                                  "Platyheminthes","Planariidae",# ADDED BY KSM DEC 23
                                                                                  "MOLLUSCA","NEMATOMORPHA","NEMATODA",
                                                                                  "Turbellaria","Cnidaria")),# Added 9/26 KSM
-    AI_PerennialIndicator_PNW = AI_Family %in% c("Pleuroceidae","Ancylidae","Hydrobiidae","Margaritiferidae","Unionidae",
+    AI_PerennialIndicator_PNW = AI_Family %in% c("Pleuroceridae","Ancylidae","Hydrobiidae","Margaritiferidae","Unionidae",
                                                  "Rhyacophilidae","Philopotamidae","Hydropsychidae","Glossosomatidae",
                                                  "Perlidae","Pteronarcyidae","Elmidae","Psephenidae",
                                                  "Gomphidae","Cordulegastridae","Calopterygidae","Corydalidae"),
@@ -654,8 +638,13 @@ ai_combined <- ai_df %>%
     AI_OtherMacro = !AI_EPT & !AI_OCH & !AI_Basommatophora & !AI_Decapoda,
   )
 
+ai_combined %>%write_csv("NotForGit/ai_combined_07282023.csv")
 
-
+ai_combined %>% 
+  filter(AI_Family=="Exclude") %>%
+  select(AI_Taxon2) %>%
+  unique() %>%
+  print(n=80)
 
 ai_combined %>% select(AI_Tolerant, AI_Tolerant_Alt, AI_Family) %>% unique() %>% filter(AI_Tolerant_Alt) %>%write.table("clipboard", sep="\t", row.names=F)
 ai_combined %>% filter(AI_Tolerant_Alt) %>%group_by(AI_Family) %>% tally() %>% arrange(n) %>%write.table("clipboard", sep="\t", row.names=F)
