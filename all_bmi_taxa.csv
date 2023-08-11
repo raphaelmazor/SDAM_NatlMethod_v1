@@ -1,0 +1,314 @@
+AI_Order,AI_Family,AI_Taxon2,AI_PerennialIndicator_PNW,AI_PerennialIndicator_NC
+Acariformes,Acariformes,Acari,FALSE,FALSE
+Acariformes,Acariformes,Acariformes,FALSE,FALSE
+Acariformes,Acariformes,Hydrachnidia,FALSE,FALSE
+Acariformes,Acariformes,Sperchon,FALSE,FALSE
+Acariformes,Acariformes,Stygothrombiidae,FALSE,FALSE
+Acariformes,Arachnida,Arachnida,FALSE,FALSE
+Annelida,Annelida,Annelida,FALSE,FALSE
+Annelida,Annelida,Erpobdellidae,FALSE,FALSE
+Annelida,Annelida,Hirudinea,FALSE,FALSE
+Annelida,Annelida,Oligochaeta,FALSE,FALSE
+BIVALVIA,BIVALVE,Bivalvia,FALSE,FALSE
+BIVALVIA,Corbiculidae,Corbiculidae,FALSE,FALSE
+BIVALVIA,Dreissenidae,Dreissenidae,FALSE,FALSE
+BIVALVIA,Margaritiferidae,Margaritiferidae,TRUE,FALSE
+BIVALVIA,Sphaeriidae,Sphaeriidae,FALSE,FALSE
+BIVALVIA,Unionidae,Unionida,TRUE,TRUE
+BIVALVIA,Unionidae,Unionidae,TRUE,TRUE
+CRUSTACEA,ASTACOIDEA,Astacoidea,FALSE,FALSE
+CRUSTACEA,Amphipoda,Amphipoda,FALSE,FALSE
+CRUSTACEA,Amphipoda,Crangonyctidae,FALSE,FALSE
+CRUSTACEA,Amphipoda,Gammaridae,FALSE,FALSE
+CRUSTACEA,Amphipoda,Hyalella,FALSE,FALSE
+CRUSTACEA,Amphipoda,Hyalellidae,FALSE,FALSE
+CRUSTACEA,Amphipoda,Talitridae,FALSE,FALSE
+CRUSTACEA,Asellidae,Asellidae,FALSE,FALSE
+CRUSTACEA,Asellidae,Caecidotea,FALSE,FALSE
+CRUSTACEA,Astacidae,Astacidae,FALSE,FALSE
+CRUSTACEA,COPEPODA,Copepoda,FALSE,FALSE
+CRUSTACEA,CRUSTACEA,Crustacea,FALSE,FALSE
+CRUSTACEA,Cambaridae,Cambaridae,FALSE,FALSE
+CRUSTACEA,Cambaridae,Procambarus clarkii,FALSE,FALSE
+CRUSTACEA,Cladocera,Daphnia,FALSE,FALSE
+CRUSTACEA,Cladocera,Diplostraca,FALSE,FALSE
+CRUSTACEA,DECAPODA,Decapoda,FALSE,FALSE
+CRUSTACEA,DECAPODA,Palaemonidae,FALSE,FALSE
+CRUSTACEA,Daphniidae,Daphniidae,FALSE,FALSE
+CRUSTACEA,Isopoda,Isopoda,FALSE,FALSE
+CRUSTACEA,Mysidae,Mysidae,FALSE,FALSE
+CRUSTACEA,OSTRACODA,Ostracoda,FALSE,FALSE
+CRUSTACEA,Oniscidae,Oniscidae,FALSE,FALSE
+CRUSTACEA,Parastacidae,Parastacidae,FALSE,FALSE
+Cnidaria,Cnidaria,Cnidaria,FALSE,FALSE
+Coleoptera,Amphizoidae,Amphizoidae,FALSE,FALSE
+Coleoptera,COLEOPTERA,Coleoptera,FALSE,FALSE
+Coleoptera,COLEOPTERA,Hydrophiloidea,FALSE,FALSE
+Coleoptera,Carabidae,Carabidae,FALSE,FALSE
+Coleoptera,Dryopidae,Dryopidae,FALSE,FALSE
+Coleoptera,Dryopidae,Helichus,FALSE,TRUE
+Coleoptera,Dytiscidae,Agabus,FALSE,FALSE
+Coleoptera,Dytiscidae,Dytiscidae,FALSE,FALSE
+Coleoptera,Elmidae,Elmidae,TRUE,TRUE
+Coleoptera,Eulichadidae,Eulichadidae,FALSE,FALSE
+Coleoptera,Georissidae,Georissidae,FALSE,FALSE
+Coleoptera,Gyrinidae,Gyrinidae,FALSE,FALSE
+Coleoptera,Haliplidae,Haliplidae,FALSE,FALSE
+Coleoptera,Helophoridae,Helophoridae,FALSE,FALSE
+Coleoptera,Hydraenidae,Hydraenidae,FALSE,FALSE
+Coleoptera,Hydrochidae,Hydrochidae,FALSE,FALSE
+Coleoptera,Hydrophilidae,Hydrophilidae,FALSE,FALSE
+Coleoptera,Hydrophilidae,Tropisternus,FALSE,FALSE
+Coleoptera,Hydroscaphidae,Hydroscaphidae,FALSE,FALSE
+Coleoptera,Lutrochidae,Lutrochidae,FALSE,FALSE
+Coleoptera,Psephenidae,Psephenidae,TRUE,TRUE
+Coleoptera,Ptilodactylidae,Ptilodactylidae,FALSE,FALSE
+Coleoptera,Scirtidae,Scirtidae,FALSE,FALSE
+Coleoptera,Staphylinidae,Staphylinidae,FALSE,FALSE
+Diptera,Athericidae,Athericidae,FALSE,FALSE
+Diptera,Blephariceridae,Blephariceridae,FALSE,FALSE
+Diptera,Ceratopogonidae,Ceratopogonidae,FALSE,FALSE
+Diptera,Chaoboridae,Chaoboridae,FALSE,FALSE
+Diptera,Chironomidae,Chironomidae,FALSE,FALSE
+Diptera,Chironomidae,Thienemannimyia,FALSE,FALSE
+Diptera,Culicidae,Culicidae,FALSE,FALSE
+Diptera,DIPTERA,Diptera,FALSE,FALSE
+Diptera,DIPTERA,Nematocera,FALSE,FALSE
+Diptera,DIPTERA,Tipuloidea,FALSE,FALSE
+Diptera,Deuterophlebiidae,Deuterophlebiidae,FALSE,FALSE
+Diptera,Dixidae,Dixidae,FALSE,FALSE
+Diptera,Dolichopodidae,Dolichopodidae,FALSE,FALSE
+Diptera,Empididae,Empididae,FALSE,FALSE
+Diptera,Ephydridae,Ephydridae,FALSE,FALSE
+Diptera,Limoniidae,Limoniidae,FALSE,FALSE
+Diptera,Muscidae,Muscidae,FALSE,FALSE
+Diptera,Pediciidae,Dicranota,FALSE,FALSE
+Diptera,Pediciidae,Pediciidae,FALSE,FALSE
+Diptera,Pelecorhynchidae,Pelecorhynchidae,FALSE,FALSE
+Diptera,Psychodidae,Psychodidae,FALSE,FALSE
+Diptera,Ptychopteridae,Ptychoptera,FALSE,TRUE
+Diptera,Ptychopteridae,Ptychopteridae,FALSE,TRUE
+Diptera,Sciomyzidae,Sciomyzidae,FALSE,FALSE
+Diptera,Simuliidae,Simuliidae,FALSE,FALSE
+Diptera,Simuliidae,Simulium,FALSE,FALSE
+Diptera,Stratiomyidae,Stratiomyidae,FALSE,FALSE
+Diptera,Syrphidae,Syrphidae,FALSE,FALSE
+Diptera,Tabanidae,Tabanidae,FALSE,FALSE
+Diptera,Tanyderidae,Tanyderidae,FALSE,FALSE
+Diptera,Thaumaleidae,Thaumaleidae,FALSE,FALSE
+Diptera,Tipulidae,Tipulidae,FALSE,FALSE
+Ephemeroptera,Ameletidae,Ameletidae,FALSE,FALSE
+Ephemeroptera,Baetidae,Baetidae,FALSE,TRUE
+Ephemeroptera,Baetidae,Baetis adonis,FALSE,TRUE
+Ephemeroptera,Baetidae,Fallceon,FALSE,TRUE
+Ephemeroptera,Baetiscidae,Baetiscidae,FALSE,FALSE
+Ephemeroptera,Caenidae,Caenidae,FALSE,TRUE
+Ephemeroptera,EPHEMEROPTERA,Ephemeroptera,FALSE,FALSE
+Ephemeroptera,Ephemerellidae,Ephemerellidae,FALSE,TRUE
+Ephemeroptera,Ephemeridae,Ephemera,FALSE,TRUE
+Ephemeroptera,Ephemeridae,Ephemeridae,FALSE,TRUE
+Ephemeroptera,Heptageniidae,Heptageniidae,FALSE,TRUE
+Ephemeroptera,Isonychiidae,Isonychiidae,FALSE,FALSE
+Ephemeroptera,Leptohyphidae,Leptohyphidae,FALSE,FALSE
+Ephemeroptera,Leptohyphidae,Tricorythidae,FALSE,FALSE
+Ephemeroptera,Leptohyphidae,Tricorythodes,FALSE,FALSE
+Ephemeroptera,Leptophlebiidae,Leptophlebiidae,FALSE,TRUE
+Ephemeroptera,Potamanthidae,Potamanthidae,FALSE,FALSE
+Ephemeroptera,Siphlonuridae,Siphlonuridae,FALSE,TRUE
+GASTROPODA,Acroloxidae,Acroloxidae,FALSE,TRUE
+GASTROPODA,Ancylidae,Ancylidae,TRUE,TRUE
+GASTROPODA,Bithyniidae,Bithyniidae,FALSE,FALSE
+GASTROPODA,GASTROPODA,Gastropoda,FALSE,FALSE
+GASTROPODA,Hydrobiidae,Hydrobiidae,TRUE,FALSE
+GASTROPODA,Hydrobiidae,Potamopyrgus antipodarum,TRUE,FALSE
+GASTROPODA,Hydrobiidae,Tateidae,TRUE,FALSE
+GASTROPODA,Lithoglyphidae,Lithoglyphidae,FALSE,FALSE
+GASTROPODA,Lymnaeidae,Lymnaeidae,FALSE,FALSE
+GASTROPODA,Physidae,Physidae,FALSE,FALSE
+GASTROPODA,Planorbidae,Planorbidae,FALSE,TRUE
+GASTROPODA,Pleuroceridae,Pleuroceridae,TRUE,TRUE
+GASTROPODA,Pomatiopsidae,Pomatiopsidae,FALSE,FALSE
+GASTROPODA,Thiaridae,Thiaridae,FALSE,FALSE
+GASTROPODA,Valvatidae,Valvatidae,FALSE,FALSE
+GASTROPODA,Viviparidae,Viviparidae,FALSE,FALSE
+Hemiptera,Belostomatidae,Abedus,FALSE,FALSE
+Hemiptera,Belostomatidae,Belostomatidae,FALSE,FALSE
+Hemiptera,Corixidae,Corixidae,FALSE,FALSE
+Hemiptera,Gelastocoridae,Gelastocoridae,FALSE,FALSE
+Hemiptera,Gerridae,Gerridae,FALSE,FALSE
+Hemiptera,HEMIPTERA,Hemiptera,FALSE,FALSE
+Hemiptera,HEMIPTERA,Heteroptera,FALSE,FALSE
+Hemiptera,HEMIPTERA,Hydrometridae,FALSE,FALSE
+Hemiptera,Hebridae,Hebridae,FALSE,FALSE
+Hemiptera,Macroveliidae,Macroveliidae,FALSE,FALSE
+Hemiptera,Mesoveliidae,Mesoveliidae,FALSE,FALSE
+Hemiptera,Naucoridae,Naucoridae,FALSE,FALSE
+Hemiptera,Nepidae,Nepidae,FALSE,FALSE
+Hemiptera,Nepidae,Ranatra,FALSE,FALSE
+Hemiptera,Notonectidae,Notonectidae,FALSE,FALSE
+Hemiptera,Pleidae,Neoplea,FALSE,FALSE
+Hemiptera,Pleidae,Pleidae,FALSE,FALSE
+Hemiptera,Saldidae,Saldidae,FALSE,FALSE
+Hemiptera,Veliidae,Veliidae,FALSE,FALSE
+Lepidoptera,LEPIDOPTERA,Lepidoptera,FALSE,FALSE
+Lepidoptera,Pyralidae,Pyralidae,FALSE,FALSE
+Megaloptera,Corydalidae,Corydalidae,TRUE,TRUE
+Megaloptera,Corydalidae,Corydalidae (Neohermes-Protochauliodes group),TRUE,TRUE
+Megaloptera,Corydalidae,Corydalidae (Orohermes-Dysmicohermes group),TRUE,TRUE
+Megaloptera,Corydalidae,Corydalus,TRUE,TRUE
+Megaloptera,Corydalidae,Neohermes,TRUE,TRUE
+Megaloptera,Corydalidae,Nigronia,TRUE,TRUE
+Megaloptera,MEGALOPTERA,Megaloptera,FALSE,FALSE
+Megaloptera,Sialidae,Sialidae,FALSE,TRUE
+Megaloptera,Sialidae,Sialis,FALSE,TRUE
+NEMATODA,NEMATODA,Nematoda,FALSE,FALSE
+NEMATOMORPHA,NEMATOMORPHA,Nematomorpha,FALSE,FALSE
+Nemertea,Nemertea,Nemertea,FALSE,FALSE
+Neuroptera,NEUROPTERA,Neuroptera,FALSE,FALSE
+Odonata,Aeshnidae,Aeshnidae,FALSE,TRUE
+Odonata,Calopterygidae,Calopterygidae,TRUE,TRUE
+Odonata,Coenagrionidae,Argia,FALSE,FALSE
+Odonata,Coenagrionidae,Coenagrionidae,FALSE,FALSE
+Odonata,Coenagrionidae,Soenagrionidae,FALSE,FALSE
+Odonata,Coenagrionidae,coenagrionidae,FALSE,FALSE
+Odonata,Cordulegastridae,Cordulegastridae,TRUE,TRUE
+Odonata,Corduliidae,Corduliidae,FALSE,FALSE
+Odonata,Gomphidae,Gomphidae,TRUE,TRUE
+Odonata,Lestidae,Lestidae,FALSE,FALSE
+Odonata,Libellulidae,Libellulidae,FALSE,TRUE
+Odonata,Libellulidae,Paltothemis lineatipes,FALSE,TRUE
+Odonata,Macromiidae,Macromiidae,FALSE,FALSE
+Odonata,ODONATA,Anisoptera,FALSE,FALSE
+Odonata,ODONATA,Odonata,FALSE,FALSE
+Odonata,ODONATA,Zygoptera,FALSE,FALSE
+Odonata,Petaluridae,Petaluridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,ARTHROPODA,Arthropoda,FALSE,FALSE
+OtherOrder_OrderNotKnown,COLLEMBOLA,Cyphoderinae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Aphididae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Aphrophoridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Araneae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Arionidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Arthropleidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Braconidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Canacidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Catostomidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Chrysididae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Chrysomelidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Chrysopidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Cicadellidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Cicadidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Coccidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Collembola,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Coreidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Crabronidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Crambidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Curculionidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Diplopoda,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Diprionidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Exclude,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Fish,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Fish (Not Mosquitofish),FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Fish (not mosquitofish),FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Formicidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Halictidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Helicidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Histeridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Hyllidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Hymenoptera,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Ithonidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Limacidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Lithobiidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Lygaeidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Meinertellidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Melyridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Miridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Mycetophilidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No Invertabrates,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No aquatic invertebrates collected,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No aquatic invertebrates observed.,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No aquatic invertrbrates observed,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No benthic macroinvertebrates observed,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No benthic macroinvertebrates observed.,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No bugs collected,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No macroinvertebrates,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No macroinvertebrates.,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No organisms,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,No perennial indicators observed.,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Noctuidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,None Found,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,None Observed,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,None Observed.,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,None present,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Not recorded,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Oxychilidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Pentatomidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Ptiliidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Ranis,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Salpingidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Sciaridae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Stylommatophora,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Terrestrial beetle,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Terrestrial beetle sp,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Terrestrial case,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Terrestrial snail,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Terrestrial sp,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Thripidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Unable to collect bugs,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Vespidae,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,Zygentoma,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,no,FALSE,FALSE
+OtherOrder_OrderNotKnown,Exclude,terrestrial centipede,FALSE,FALSE
+OtherOrder_OrderNotKnown,MOLLUSCA,Mollusca,FALSE,FALSE
+Platyheminthes,Planariidae,Planariidae,FALSE,FALSE
+Platyheminthes,Turbellaria,Dugesia,FALSE,FALSE
+Platyheminthes,Turbellaria,Platyhelminthes,FALSE,FALSE
+Platyheminthes,Turbellaria,Turbellaria,FALSE,FALSE
+Plecoptera,Capniidae,Capniidae,FALSE,FALSE
+Plecoptera,Chloroperlidae,Chloroperlidae,FALSE,FALSE
+Plecoptera,Leuctridae,Leuctridae,FALSE,FALSE
+Plecoptera,Nemouridae,Nemouridae,FALSE,FALSE
+Plecoptera,PLECOPTERA,Plecoptera,FALSE,FALSE
+Plecoptera,Peltoperlidae,Peltoperlidae,FALSE,TRUE
+Plecoptera,Perlidae,Perlidae,TRUE,TRUE
+Plecoptera,Perlodidae,Isoperla,FALSE,TRUE
+Plecoptera,Perlodidae,Isoperla denningi,FALSE,TRUE
+Plecoptera,Perlodidae,Perlodidae,FALSE,TRUE
+Plecoptera,Pteronarcyidae,Pteronarcyidae,TRUE,FALSE
+Plecoptera,Taeniopterygidae,Taenionema,FALSE,FALSE
+Plecoptera,Taeniopterygidae,Taeniopterygidae,FALSE,FALSE
+Trichoptera,Apataniidae,Apataniidae,FALSE,FALSE
+Trichoptera,Beraeidae,Beraeidae,FALSE,FALSE
+Trichoptera,Brachycentridae,Brachycentridae,FALSE,FALSE
+Trichoptera,Calamoceratidae,Calamoceratidae,FALSE,FALSE
+Trichoptera,Ecnomidae,Ecnomidae,FALSE,FALSE
+Trichoptera,Glossosomatidae,Glossoma,TRUE,FALSE
+Trichoptera,Glossosomatidae,Glossosomatidae,TRUE,FALSE
+Trichoptera,Goeridae,Goeridae,FALSE,FALSE
+Trichoptera,Helicopsychidae,Helicopsychidae,FALSE,FALSE
+Trichoptera,Hydrobiosidae,Hydrobiosidae,FALSE,FALSE
+Trichoptera,Hydropsychidae,Cheumatopsyche,TRUE,TRUE
+Trichoptera,Hydropsychidae,Hydropsychidae,TRUE,TRUE
+Trichoptera,Hydroptilidae,Hydroptilidae,FALSE,FALSE
+Trichoptera,Lepidostomatidae,Lepidostoma,FALSE,TRUE
+Trichoptera,Lepidostomatidae,Lepidostomatidae,FALSE,TRUE
+Trichoptera,Leptoceridae,Ceraclea,FALSE,FALSE
+Trichoptera,Leptoceridae,Leptoceridae,FALSE,FALSE
+Trichoptera,Limnephilidae,Limnephilidae,FALSE,TRUE
+Trichoptera,Limnephilidae,Onocosmoecus,FALSE,TRUE
+Trichoptera,Molannidae,Molannidae,FALSE,TRUE
+Trichoptera,Odontoceridae,Odontoceridae,FALSE,TRUE
+Trichoptera,Odontoceridae,odontoceridae,FALSE,TRUE
+Trichoptera,Philopotamidae,Philopotamidae,TRUE,TRUE
+Trichoptera,Phryganeidae,Phryganeidae,FALSE,FALSE
+Trichoptera,Phryganeidae,Phyrysaneidae,FALSE,FALSE
+Trichoptera,Phryganeidae,phryganeidae,FALSE,FALSE
+Trichoptera,Polycentropodidae,Nyctiophylax,FALSE,FALSE
+Trichoptera,Polycentropodidae,Polycentropodidae,FALSE,FALSE
+Trichoptera,Psychomyiidae,Psychomyiidae,FALSE,TRUE
+Trichoptera,Rhyacophilidae,Rhayn,TRUE,TRUE
+Trichoptera,Rhyacophilidae,Rhyacophilidae,TRUE,TRUE
+Trichoptera,Rossianidae,Rossianidae,FALSE,FALSE
+Trichoptera,Sericostomatidae,Sericostomatidae,FALSE,FALSE
+Trichoptera,TRICHOPTERA,Trichoptera,FALSE,FALSE
+Trichoptera,Uenoidae,Uenoidae,FALSE,FALSE

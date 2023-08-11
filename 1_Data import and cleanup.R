@@ -527,6 +527,7 @@ hydroveg_df<-
     InChannel = hv_inchannel, #NESE
     Plant_notes=hv_notes
   ) 
+write_csv(hydroveg_df, "NotForGit/hydroveg_df.csv")
 # hydroveg_df %>% group_by(Plant_Species) %>% tally()  %>%
 #   clipr::write_clip()
 # 

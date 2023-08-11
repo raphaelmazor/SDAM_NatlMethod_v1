@@ -1829,7 +1829,7 @@ main_df3 %>%
                                         SeepsSprings_yn=="present"~1.5,
          )) %>%
   select(all_of(nm_varz)) %>% skim()
-           
+
 
 main_df3_OtherSDAMs<-main_df3 %>%
   inner_join(main_df %>% select(ParentGlobalID, WaterInChannel_score, ironox_bfscore_NM, SedimentOnPlantsDebris_score,SeepsSprings_yn) %>% unique()) %>%
@@ -1837,83 +1837,89 @@ main_df3_OtherSDAMs<-main_df3 %>%
   mutate(STATE = str_sub(SiteCode, 1,2),
          ironox_bfscore_NM = case_when(is.na(ironox_bfscore_NM)~0, T~ironox_bfscore_NM),
          SeepsSprings_score = case_when(is.na(SeepsSprings_yn)~0,
-                                        SeepsSprings_yn=="notdetected"~0,
+                                        SeepsSprings_yn %in% c("notdetected","notdectected")~0,
                                         SeepsSprings_yn=="present"~1.5,
-                                        ),
-         NM_ClassScore = WaterInChannel_score + Fish_score_NM +BMI_score +AlgaeAbundance_NM +RiparianCorridor_score +UplandRootedPlants_score+
-           Sinuosity_score+ChannelDimensions_score+RifflePoolSeq_score+SubstrateSorting_score+HydricSoils_score+SedimentOnPlantsDebris_score+
-           SeepsSprings_score+ironox_bfscore_NM,
-         NM_ClassPrelim = case_when(NM_ClassScore<9~"E",
-                                    NM_ClassScore<12~"It",
-                                    NM_ClassScore<=19~"I",
-                                    NM_ClassScore<=22~"Pt",
-                                    NM_ClassScore>22~"P"),
-         NM_ClassNoSI = case_when(NM_ClassScore<9~"E",
-                                  NM_ClassScore<12~"I",
-                                  NM_ClassScore<=19~"I",
-                                  NM_ClassScore<=22~"P",
-                                  NM_ClassScore>22~"P"),
-         NM_Class = case_when(NM_ClassNoSI %in% c("E") & Fish_PA==1~"ALI",
-                              NM_ClassNoSI %in% c("E") & BMI_score>0~"ALI",
-                              T~NM_ClassNoSI),
-         PNW_Class_noSI = case_when(BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==1 ~"P",
-                                    BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==0 & Slope>=16 ~"P",
-                                    BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==0 & Slope<16 ~"I",
-                                    BMI_presence==1 & Ephemeroptera_SumOfIndividuals<2~"I",
-                                    BMI_presence==0 & hydrophytes_present_any==1 & Slope>=10.5~"E",
-                                    BMI_presence==0 & hydrophytes_present_any==1 & Slope<10.5~"I",
-                                    BMI_presence==0 & hydrophytes_present_any==0~"E",
-                                    T~"OTHER"),
-         PNW_Class = case_when(PNW_Class_noSI=="E" & Fish_PA==1 ~ "ALI",
-                               PNW_Class_noSI=="E" & AmphSnake_PA==1 ~ "ALI",
-                               T~PNW_Class_noSI),
-         BetaAW_Class = case_when(hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"E",
-                                  hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
-                                  hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2 ~"ALI",
-                                  
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2~"ALI",
-                                  
-                                  hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa>=1 ~"ALI",
-                                  
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2~"ALI",
-                                  
-                                  hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa>=1 ~"ALI",
-                                  
-                                  hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
-                                  hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
-                                  hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
-                                  
-                                  hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"I",
-                                  hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
-                                  
-                                  hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa>0 ~"ALI",
-                                  
-                                  hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"I",
-                                  hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
-                                  hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa>0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"ALI",
-                                  hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa>0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"I",
-                                  
-                                  hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0 ~"NMI",
-                                  hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1 ~"ALI",
-                                  hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0  ~"ALI",
-                                  
-                                  hydrophytes_present>2 & TotalAbundance<=19 & EPT_taxa==0 ~"ALI",
-                                  hydrophytes_present>2 & TotalAbundance<=19 & EPT_taxa>0 ~"P",
-                                  hydrophytes_present>2 & TotalAbundance>=20 & EPT_taxa==0 ~"ALI",
-                                  hydrophytes_present>2 & TotalAbundance>=20 & EPT_taxa>0 ~"P",
-                                  T~"OTHER"),
-         #ADD NM METHOD!!!
-         )
+         ) ) %>%
+  rowwise() %>%
+  mutate(NM_ClassScore = sum(WaterInChannel_score, Fish_score_NM, BMI_score, AlgaeAbundance_NM, RiparianCorridor_score, UplandRootedPlants_score,
+                             Sinuosity_score, ChannelDimensions_score , RifflePoolSeq_score, SubstrateSorting_score,HydricSoils_score, SedimentOnPlantsDebris_score,
+                             SeepsSprings_score,ironox_bfscore_NM, na.rm=T)) %>%
+  ungroup() %>%
+  mutate(
+    # NM_ClassScore = WaterInChannel_score + Fish_score_NM +BMI_score +AlgaeAbundance_NM +RiparianCorridor_score +UplandRootedPlants_score+
+    # Sinuosity_score+ChannelDimensions_score+RifflePoolSeq_score+SubstrateSorting_score+HydricSoils_score+SedimentOnPlantsDebris_score+
+    # SeepsSprings_score+ironox_bfscore_NM,
+    NM_ClassPrelim = case_when(NM_ClassScore<9~"E",
+                               NM_ClassScore<12~"It",
+                               NM_ClassScore<=19~"I",
+                               NM_ClassScore<=22~"Pt",
+                               NM_ClassScore>22~"P"),
+    NM_ClassNoSI = case_when(NM_ClassScore<9~"E",
+                             NM_ClassScore<12~"I",
+                             NM_ClassScore<=19~"I",
+                             NM_ClassScore<=22~"P",
+                             NM_ClassScore>22~"P"),
+    NM_Class = case_when(NM_ClassNoSI %in% c("E") & Fish_PA==1~"ALI",
+                         NM_ClassNoSI %in% c("E") & BMI_score>0~"ALI",
+                         T~NM_ClassNoSI),
+    PNW_Class_noSI = case_when(BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==1 ~"P",
+                               BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==0 & Slope>=16 ~"P",
+                               BMI_presence==1 & Ephemeroptera_SumOfIndividuals==2 & PerennialPNWMacroPresent==0 & Slope<16 ~"I",
+                               BMI_presence==1 & Ephemeroptera_SumOfIndividuals<2~"I",
+                               BMI_presence==0 & hydrophytes_present_any==1 & Slope>=10.5~"E",
+                               BMI_presence==0 & hydrophytes_present_any==1 & Slope<10.5~"I",
+                               BMI_presence==0 & hydrophytes_present_any==0~"E",
+                               T~"OTHER"),
+    PNW_Class = case_when(PNW_Class_noSI=="E" & Fish_PA==1 ~ "ALI",
+                          PNW_Class_noSI=="E" & AmphSnake_PA==1 ~ "ALI",
+                          T~PNW_Class_noSI),
+    BetaAW_Class = case_when(hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"E",
+                             hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
+                             hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2 ~"ALI",
+                             
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2~"ALI",
+                             
+                             hydrophytes_present==0 & TotalAbundance<=19 & EPT_taxa>=1 ~"ALI",
+                             
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==0~"NMI",
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream<=2 & Fish_PA==1~"ALI",
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>2~"ALI",
+                             
+                             hydrophytes_present==0 & TotalAbundance>=20 & EPT_taxa>=1 ~"ALI",
+                             
+                             hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0~"NMI",
+                             hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1~"ALI",
+                             hydrophytes_present<=2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
+                             
+                             hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"I",
+                             hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
+                             
+                             hydrophytes_present<=2 & TotalAbundance<=19 & EPT_taxa>0 ~"ALI",
+                             
+                             hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"I",
+                             hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"ALI",
+                             hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa>0 & AlgalCover_LiveOrDead_NoUpstream==0 ~"ALI",
+                             hydrophytes_present<=2 & TotalAbundance>=20 & EPT_taxa>0 & AlgalCover_LiveOrDead_NoUpstream>0 ~"I",
+                             
+                             hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==0 ~"NMI",
+                             hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream==0 & Fish_PA==1 ~"ALI",
+                             hydrophytes_present>2 & TotalAbundance==0 & EPT_taxa==0 & AlgalCover_LiveOrDead_NoUpstream>0  ~"ALI",
+                             
+                             hydrophytes_present>2 & TotalAbundance<=19 & EPT_taxa==0 ~"ALI",
+                             hydrophytes_present>2 & TotalAbundance<=19 & EPT_taxa>0 ~"P",
+                             hydrophytes_present>2 & TotalAbundance>=20 & EPT_taxa==0 ~"ALI",
+                             hydrophytes_present>2 & TotalAbundance>=20 & EPT_taxa>0 ~"P",
+                             T~"OTHER"),
+    
+  )
 
 
 main_df3_OtherSDAMs %>%
@@ -1945,12 +1951,12 @@ main_df3_OtherSDAMs %>%
                                    Class == "P" & BetaAW_Class %in% c("P","ALI")~T,
                                    Class == "P" & BetaAW_Class %in% c("E","I","NMI")~F),
          EvALI_correct= case_when(Class == "E" & BetaAW_Class=="E"~T,
-                                   Class == "E" & BetaAW_Class %in% c("I","ALI","P","NMI")~F,
-                                   Class == "I" & BetaAW_Class %in% c("I","ALI","P")~T,
-                                   Class == "I" & BetaAW_Class %in% c("E","NMI")~F,
-                                   Class == "P" & BetaAW_Class %in% c("I", "P","ALI")~T,
-                                   Class == "P" & BetaAW_Class %in% c("E","NMI")~F),
-           ) %>%
+                                  Class == "E" & BetaAW_Class %in% c("I","ALI","P","NMI")~F,
+                                  Class == "I" & BetaAW_Class %in% c("I","ALI","P")~T,
+                                  Class == "I" & BetaAW_Class %in% c("E","NMI")~F,
+                                  Class == "P" & BetaAW_Class %in% c("I", "P","ALI")~T,
+                                  Class == "P" & BetaAW_Class %in% c("E","NMI")~F),
+  ) %>%
   group_by(Region_detail2, EvALI_correct) %>%
   summarise(n=sum(n))
 
@@ -1988,13 +1994,13 @@ WM_metrics_df<-read_csv("NotForGit/WMModels/metrics_df.csv")
 SnowDomModel_Simplified_varz<-SnowDomModel_Simplified$importance %>% row.names()
 NonSnowDomModel_Simplified_varz<-NonSnowDomModel_Simplified$importance %>% row.names()
 
-main_df3_OtherSDAMs$m
+# main_df3_OtherSDAMs$m
 
 main_df3_OtherSDAMs2<-main_df3_OtherSDAMs %>%
   inner_join(main_df %>% select(Mosquitofish, SiteCode, CollectionDate) %>% unique()) %>%
   inner_join(
     gis_metrics_df %>%
-       select(SiteCode,  ppt.m05, ppt.m10, tmax, MeanSnowPersistence_10)
+      select(SiteCode,  ppt.m05, ppt.m10, tmax, MeanSnowPersistence_10)
   ) %>%
   mutate(PerennialTaxa_cat = case_when(perennial_PNW_taxa==0~0,
                                        perennial_PNW_taxa<=1~1,
@@ -2024,7 +2030,7 @@ main_df3_OtherSDAMs2<-main_df3_OtherSDAMs %>%
          fishabund_score2=case_when(Mosquitofish=="yes"~0,
                                     T~Fish_score_NM  )
   )
-  
+
 setdiff(NonSnowDomModel_Simplified_varz, names(main_df3_OtherSDAMs2))
 
 
@@ -2070,8 +2076,11 @@ main_df3_OtherSDAMs3<-main_df3_OtherSDAMs2 %>%
          BetaWM_probI= case_when(MeanSnowPersistence_10<25~WM_NoSnow_I,
                                  MeanSnowPersistence_10>=25~WM_Snow_I),
          BetaWM_probP= case_when(MeanSnowPersistence_10<25~WM_NoSnow_P,
-                                 MeanSnowPersistence_10>=25~WM_Snow_P))
-
+                                 MeanSnowPersistence_10>=25~WM_Snow_P),
+         BetaAWWM_Class = case_when(beta_region=="Arid West"~BetaAW_Class,
+                                    beta_region=="Western Mountains"~BetaWM_Class,
+                                    T~"Other"))
+main_df3_OtherSDAMs3 %>% group_by(Region_detail2, BetaAWWM_Class) %>% tally()
 
 main_df3_OtherSDAMs3 %>%
   group_by(Region_detail2,Class, BetaWM_Class) %>% 
@@ -2091,3 +2100,273 @@ main_df3_OtherSDAMs3 %>%
   ) %>%
   group_by(Region_detail2, EvALI_correct) %>%
   summarise(n=sum(n))
+###########
+#Add Betas to performance plots
+
+
+beta_accuracy_plot_dat<-mod_summary_long %>% filter(MetricType2=="Accuracy") %>%
+  select(-Stratification, -Strata, -ModName, -ModName2, -n_training, -n_testing, -name, -MetricType2, -Metric)
+
+pnw_accuracy_plot_dat<-  crossing(
+  IncludeGISPreds=F,
+  IncludPNW=T,
+  SiteSet="Training",
+  Comparison=c("PvIvE","EvALI"),
+  Strata2 = c("PNW method_West","PNW method_AW", "PNW method_WM")
+)
+
+
+beta_accuracy_plot_dat1<-main_df3_OtherSDAMs3 %>%
+  # group_by(Region_detail2, Class, PNW_Class) %>% 
+  # tally() %>%
+  select(SiteCode, Region_detail2, STATE, Class,
+         # BetaAW_Class, BetaWM_Class, PNW_Class, NM_Class) %>%
+         BetaAWWM_Class, PNW_Class, NM_Class) %>%
+  # pivot_longer(cols=c(BetaAW_Class, BetaWM_Class, PNW_Class, NM_Class), names_to = "Method", values_to = "MethodClass", values_drop_na = T) %>%
+  pivot_longer(cols=c(BetaAWWM_Class, PNW_Class, NM_Class), names_to = "Method", values_to = "MethodClass", values_drop_na = T) %>%
+  mutate(PvIvE_correct = case_when(Class == "E" & MethodClass=="E"~T,
+                                   Class == "E" & MethodClass %in% c("I","ALI","P","NMI")~F,
+                                   Class == "I" & MethodClass %in% c("I","ALI")~T,
+                                   Class == "I" & MethodClass %in% c("E","P","NMI")~F,
+                                   Class == "P" & MethodClass %in% c("P","ALI")~T,
+                                   Class == "P" & MethodClass %in% c("E","I","NMI")~F),
+         EvALI_correct= case_when(Class == "E" & MethodClass=="E"~T,
+                                  Class == "E" & MethodClass %in% c("I","ALI","P","NMI")~F,
+                                  Class == "I" & MethodClass %in% c("I","ALI","P")~T,
+                                  Class == "I" & MethodClass %in% c("E","NMI")~F,
+                                  Class == "P" & MethodClass %in% c("I", "P","ALI")~T,
+                                  Class == "P" & MethodClass %in% c("E","NMI")~F),
+         EnotP_correct= Class=="E" & MethodClass %in% c("E","I","ALI"),
+         PnotE_correct= Class=="P" &  MethodClass %in% c("P","I","ALI"),
+  ) %>%
+  crossing(Strata2=c("West","AW","WM")) %>%
+  group_by(Method) %>%
+  summarise(PvIvE_WEST=sum(PvIvE_correct)/length(PvIvE_correct ),
+            PvIvE_AW=sum(PvIvE_correct[Region_detail2=="AW"])/length(PvIvE_correct[Region_detail2=="AW"] ),
+            PvIvE_WM=sum(PvIvE_correct[Region_detail2=="WM"])/length(PvIvE_correct[Region_detail2=="WM"] ),
+            EvALI_WEST=sum(EvALI_correct)/length(EvALI_correct ),
+            EvALI_AW=sum(EvALI_correct[Region_detail2=="AW"])/length(EvALI_correct[Region_detail2=="AW"] ),
+            EvALI_WM=sum(EvALI_correct[Region_detail2=="WM"])/length(EvALI_correct[Region_detail2=="WM"] ),
+            EnotP_WEST=sum(EnotP_correct)/length(EnotP_correct[Class=="E" & MethodClass!="NMI"] ),
+            EnotP_AW=sum(EnotP_correct[Region_detail2=="AW"])/length(EnotP_correct[Region_detail2=="AW" & Class=="E" & MethodClass!="NMI"] ),
+            EnotP_WM=sum(EnotP_correct[Region_detail2=="WM"])/length(EnotP_correct[Region_detail2=="WM" & Class=="E" & MethodClass!="NMI"] ),
+            PnotE_WEST=sum(PnotE_correct)/length(PnotE_correct[Class=="P" & MethodClass!="NMI"] ),
+            PnotE_AW=sum(PnotE_correct[Region_detail2=="AW"])/length(PnotE_correct[Region_detail2=="AW"& Class=="P" & MethodClass!="NMI"] ),
+            PnotE_WM=sum(PnotE_correct[Region_detail2=="WM"])/length(PnotE_correct[Region_detail2=="WM" & Class=="P" & MethodClass!="NMI"] ),
+            
+  ) %>%
+  ungroup() %>%
+  pivot_longer(cols=c(starts_with("PvIvE"),starts_with("EvALI"), starts_with("PnotE"), starts_with("EnotP"))) %>%
+  mutate(Comparison = case_when(str_detect(name, "PvIvE")~"PvIvE",
+                                str_detect(name, "EvALI")~"EvALI",
+                                str_detect(name, "EnotP")~"EnotP",
+                                str_detect(name, "PnotE")~"PnotE",
+                                T~"Other"),
+         Strata2 =   case_when(str_detect(name, "WEST")~"West",
+                               str_detect(name, "AW")~"AW",
+                               str_detect(name, "WM")~"WM",
+                               T~"Other"),
+         Method2 = str_remove_all(Method, "_Class"))
+
+
+
+accuracy_performance_metrics_WEST2_BETAS<-ggplot(data=beta_accuracy_plot_dat1 %>% filter(Comparison %in% c("PvIvE","EvALI")), 
+                                                 aes(x=Method2, y=value))+
+  geom_point(aes(color=Strata2))+ 
+  # scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~., scales="free_x", space="free")+
+  theme_bw()+
+  geom_hline(yintercept = c(.8,.9,.5), linetype="dotted")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="Where measured?")+
+  ylab("Accuracy")+xlab("")+
+  theme(legend.position = "bottom",
+        strip.text.y = element_text(angle=0))
+accuracy_performance_metrics_WEST2_BETAS
+ggsave(accuracy_performance_metrics_WEST2_BETAS, filename="Figures_VaryingPredictors_WEST/accuracy_performance_metrics_WEST2_BETAS.png", 
+       height=7.5, width=6)
+
+
+accuracy_performance_metrics_WEST2_BETAS2<-ggplot(data=beta_accuracy_plot_dat1 %>% filter(Comparison %in% c("PnotE","EnotP")), 
+                                                  aes(x=Method2, y=value))+
+  geom_point(aes(color=Strata2))+ 
+  # scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~., scales="free_x", space="free")+
+  theme_bw()+
+  geom_hline(yintercept = c(.8,.9,.5), linetype="dotted")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="Where measured?")+
+  ylab("Accuracy")+xlab("")+
+  theme(legend.position = "bottom",
+        strip.text.y = element_text(angle=0))
+accuracy_performance_metrics_WEST2_BETAS2
+ggsave(accuracy_performance_metrics_WEST2_BETAS2, filename="Figures_VaryingPredictors_WEST/accuracy_performance_metrics_WEST2_BETAS2.png", 
+       height=7.5, width=6)
+
+
+
+accuracy_performance_metrics_WEST2x<-ggplot(data=mod_summary_long %>% 
+                                              # filter(MetricType2=="Accuracy") %>% 
+                                              filter(Comparison %in% c("EnotP","PnotE")) , 
+                                            aes(x=Strata2, y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds, group=IncludePNW), position=position_dodge(width=.5))+ 
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~., scales="free_x", space="free")+
+  theme_bw()+
+  geom_hline(yintercept = c(.8,.9,.5), linetype="dotted")+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")+
+  theme(legend.position = "bottom",
+        strip.text.y = element_text(angle=0))
+ggsave(accuracy_performance_metrics_WEST2x, filename="Figures_VaryingPredictors_WEST/accuracy_performance_metrics_WEST2x.png", 
+       height=7.5, width=6)
+# 
+# precision_performance_metrics_WEST<-ggplot(data=mod_summary_long %>% filter(MetricType2=="Precision") , 
+#                                            aes(x=Strata2, y=value))+
+#   geom_point(aes(size=SiteSet, color=IncludeGISPreds, group=IncludePNW), position=position_dodge(width=.5))+ 
+#   scale_size_manual(values=c(1,2))+
+#   facet_grid(Comparison~., scales="free_x", space="free")+
+#   theme_bw()+
+#   geom_hline(yintercept = c(.8,.9,.5), linetype="dotted")+
+#   theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+#   scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+#   ylab("Precision")+xlab("")+
+#   theme(legend.position = "bottom",
+#         strip.text.y = element_text(angle=0))
+# ggsave(precision_performance_metrics_WEST, filename="Figures_VaryingPredictors_WEST/precision_performance_metrics_WEST.png", 
+#        height=7.5, width=6)
+
+
+
+beta_accuracy_plot_dat2<-main_df3_OtherSDAMs3 %>%
+  # group_by(Region_detail2, Class, PNW_Class) %>% 
+  # tally() %>%
+  select(SiteCode, Region_detail2, STATE, Class,
+         # BetaAW_Class, BetaWM_Class, PNW_Class, NM_Class) %>%
+         BetaAWWM_Class, PNW_Class, NM_Class) %>%
+  # pivot_longer(cols=c(BetaAW_Class, BetaWM_Class, PNW_Class, NM_Class), names_to = "Method", values_to = "MethodClass", values_drop_na = T) %>%
+  pivot_longer(cols=c(BetaAWWM_Class, PNW_Class, NM_Class), names_to = "Method", values_to = "MethodClass", values_drop_na = T) %>%
+  mutate(PvIvE_correct = case_when(Class == "E" & MethodClass=="E"~T,
+                                   Class == "E" & MethodClass %in% c("I","ALI","P","NMI")~F,
+                                   Class == "I" & MethodClass %in% c("I","ALI")~T,
+                                   Class == "I" & MethodClass %in% c("E","P","NMI")~F,
+                                   Class == "P" & MethodClass %in% c("P","ALI")~T,
+                                   Class == "P" & MethodClass %in% c("E","I","NMI")~F),
+         EvALI_correct= case_when(Class == "E" & MethodClass=="E"~T,
+                                  Class == "E" & MethodClass %in% c("I","ALI","P","NMI")~F,
+                                  Class == "I" & MethodClass %in% c("I","ALI","P")~T,
+                                  Class == "I" & MethodClass %in% c("E","NMI")~F,
+                                  Class == "P" & MethodClass %in% c("I", "P","ALI")~T,
+                                  Class == "P" & MethodClass %in% c("E","NMI")~F),
+         EnotP_correct= Class=="E" & MethodClass %in% c("E","I","ALI"),
+         PnotE_correct= Class=="P" &  MethodClass %in% c("P","I","ALI"),
+  ) %>%
+  group_by(Method, STATE) %>%
+  summarise(PvIvE=sum(PvIvE_correct)/length(PvIvE_correct ),
+            EvALI=sum(EvALI_correct)/length(EvALI_correct ),
+            # EnotP=sum(EnotP_correct)/length(EnotP_correct[Class=="E" & MethodClass!="NMI"] ),
+            # PnotE=sum(PnotE_correct)/length(PnotE_correct[Class=="P" & MethodClass!="NMI"] )
+  ) %>%
+  ungroup() %>%
+  pivot_longer(cols=c(starts_with("PvIvE"),starts_with("EvALI"), starts_with("PnotE"), starts_with("EnotP"))) %>%
+  mutate(Comparison = case_when(str_detect(name, "PvIvE")~"PvIvE",
+                                str_detect(name, "EvALI")~"EvALI",
+                                str_detect(name, "EnotP")~"EnotP",
+                                str_detect(name, "PnotE")~"PnotE",
+                                T~"Other"),
+         # Strata2 =   case_when(str_detect(name, "WEST")~"West",
+         #                       str_detect(name, "AW")~"AW",
+         #                       str_detect(name, "WM")~"WM",
+         #                       T~"Other"),
+         Method2 = str_remove_all(Method, "_Class"))
+
+
+subpop_accuracy_plot_WEST_STATES_BETAS<-
+  ggplot(data=beta_accuracy_plot_dat2 %>%
+           
+           filter(STATE!="SD" ) %>%
+           
+           mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+         aes(x=STATE , y=value))+
+  geom_point()+ 
+  geom_path(aes(group=1))+ 
+  # geom_hline(data=mod_summary_long_across_strata %>%
+  #              filter(MetricType2=="Accuracy") %>%
+  #              mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+  #            aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
+  # scale_linetype_manual(values=c("dotted","dashed"))+
+  # scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Method, scales="free_x", space="free")+
+  theme_bw()+
+  # theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")
+subpop_accuracy_plot_WEST_STATES_BETAS
+ggsave(subpop_accuracy_plot_WEST_STATES_BETAS, filename="Figures_VaryingPredictors_WEST/subpop_accuracy_plot_WEST_STATES_BETAS.png", height=6, width=10)
+
+
+combo_consistency_dat<-beta_accuracy_plot_dat2 %>%
+  filter(STATE!="SD" )%>%
+  bind_rows(
+    mod_summary_assessment_strata_long %>%
+      filter(MetricType2=="Accuracy" &
+               SiteSet=="Training") %>%
+      filter(AssessmentStratum!="SD" ) %>%
+      transmute(Method=Stratification2,
+             STATE=AssessmentStratum,
+             name,
+             value,
+             Comparison,
+             Method2=case_when(IncludeGISPreds~paste(Stratification2,"GIS"),
+                               T~Stratification2),
+             
+      )
+  ) %>%
+  mutate(Type=case_when(Method2 %in% c("BetaAW","BetaWM","NM","PNW")~"Old",
+                        Method2 %in% c("Beta","Beta GIS",
+                                       "MLRA (PNW)","MLRA (PNW) GIS", 
+                                       "West", "West GIS",
+                                       "West (PNW)", "West (PNW) GIS")~"New",
+                        T~"Other"))
+
+
+combo_consistency_dat %>%
+  filter(Method2 =="NM")
+old_v_new_methods_consistency_plot<-ggplot(data=combo_consistency_dat, aes(x=STATE, y=value, color=Method2, linetype=Type))+
+  geom_point()+
+  geom_path(aes(group=Method2))+
+  facet_wrap(~Comparison, ncol=1)+
+  theme_bw()
+ggsave(old_v_new_methods_consistency_plot, filename="Figures_VaryingPredictors_WEST/old_v_new_methods_consistency_plot.png",
+       height=6, width=8)
+
+ggplot(data=combo_consistency_dat, aes(x=Method2, y=value, color=Method2, linetype=Type))+
+  # geom_point()+
+  # geom_path(aes(group=Method2))+
+  geom_boxplot()+
+  facet_wrap(~Comparison, ncol=1)+
+  theme_bw()
+
+combo_consistency_dat %>%
+  group_by(Method2, Type) %>% tally() 
+
+# subpop_accuracy_plot_WEST_STATES<-
+  ggplot(data=combo_consistency_dat %>%
+           mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI"))),
+         aes(x=AssessmentStratum , y=value))+
+  geom_point(aes(size=SiteSet, color=IncludeGISPreds), position=position_dodge(width=0))+ 
+  geom_path(data = . %>% filter(SiteSet=="Training"),
+            aes( color=IncludeGISPreds, group=IncludeGISPreds))+ 
+  # geom_hline(data=mod_summary_long_across_strata %>%
+  #              filter(MetricType2=="Accuracy") %>%
+  #              mutate(Comparison=factor(Comparison, levels=c("PvIvE","EvALI","PnotE","EnotP"))),
+  #            aes(yintercept=value_unweighted, color=IncludeGISPreds, linetype=SiteSet))+
+  scale_linetype_manual(values=c("dotted","dashed"))+
+  scale_size_manual(values=c(1,2))+
+  facet_grid(Comparison~Stratification2, scales="free_x", space="free")+
+  theme_bw()+
+  # theme(axis.text.x = element_text(angle=90,  vjust = 0.5, hjust=1))+
+  scale_color_brewer(palette = "Set1", name="GIS", labels=c("No","Yes"))+
+  ylab("Accuracy")+xlab("")+
+  scale_y_continuous(limits=c(.5,1))
